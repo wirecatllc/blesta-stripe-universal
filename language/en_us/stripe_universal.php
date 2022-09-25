@@ -10,6 +10,7 @@ $lang['StripeUniversal.!error.payment_in_progress'] = 'Payment gateway indicates
 $lang['StripeUniversal.!error.payment_not_received'] = 'Payment gateway shows that you didn\'t finished the transaction. Please try again.';
 $lang['StripeUniversal.!error.payment_expired'] = 'Payment gateway returns that the current transaction has expired. Please re-checkout';
 
+// Payment Status
 $lang['StripeUniversal.!error.payment_canceled'] = 'Payment gateway returns that the current transaction has canceled. Please re-checkout';
 $lang['StripeUniversal.!error.session_id.missing'] = 'Return URL missing session ID. If your checkout process has finished, please wait for system validation.';
 $lang['StripeUniversal.!error.payment_expired'] = 'Payment gateway returns that the current transaction has expired. Please re-checkout';
@@ -23,6 +24,9 @@ $lang['StripeUniversal.description'] = 'Uses Stripe Checkout to process payments
 $lang['StripeUniversal.secret_key'] = 'API Secret Key';
 $lang['StripeUniversal.test_key_detected'] = 'You are currently using Test Key! Change to Live key once you are ready.';
 $lang['StripeUniversal.tooltip_secret_key'] = 'Your API Secret Key is specific to either live or test mode. Be sure you are using the correct key.';
+
+$lang['StripeUniversal.webhook_secret'] = 'Webhook Secret';
+$lang['StripeUniversal.tooltip_webhook_secret'] = 'When set, Gateway will try to verify the webhook request using the given secret.';
 
 $lang['StripeUniversal.webhook'] = 'Stripe Webhook';
 $lang['StripeUniversal.webhook_note'] = 'It is recommended to configure the following url as a Webhook for "checkout.session.completed" events in your Stripe account.';

@@ -11,6 +11,8 @@ class StripeUniversal extends NonmerchantGateway
      */
     private $meta;
 
+    private $base_url = 'https://api.stripe.com/v1/';
+
     /**
      * Construct a new merchant gateway
      */
@@ -407,14 +409,33 @@ class StripeUniversal extends NonmerchantGateway
 
         // Get event payload
         $payload = @file_get_contents('php://input');
+        $sig_header = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? null;
+
         try {
-            $event = \Stripe\Event::constructFrom(json_decode($payload, true));
+            $webhook_secret = $this->meta['webhook_secret'] ?? null;
+            if ($webhook_secret) {
+                $event = Stripe\Webhook::constructEvent(
+                    $payload,
+                    $sig_header,
+                    $webhook_secret
+                );
+            } else {
+                $event = \Stripe\Event::constructFrom($payload);
+            }
+        } catch (\Stripe\Exception\SignatureVerificationException $e) {
+            $this->log($this->base_url . 'Webhook - invalid_signature', $e->getMessage());
+            $this->Input->setErrors(['event' => ['internal' => "invalid_signature"]]);
+            
+            return [];
         } catch (\UnexpectedValueException $e) {
-            $this->Input->setErrors([
-                'event' => [
-                    'message' => $e->getMessage(),
-                ]
-            ]);
+            $this->log($this->base_url . 'Webhook - invalid_payload',  $e->getMessage());
+            $this->Input->setErrors(['event' => ['internal' => "invalid_payload"]]);
+
+            return [];
+        } catch (Exception $e) {
+            $this->log($this->base_url . "Webhook - unknown", $e->getMessage());
+            $this->Input->setErrors(['event' => ['internal' => "unknown"]]);
+
             return [];
         }
 

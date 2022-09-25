@@ -8,9 +8,16 @@
 			<span class="tooltip"><?php $this->_('AppController.tooltip.text');?><div><?php $this->_('StripeUniversal.tooltip_secret_key');?></div></span>
             <?php
                 if (isset($meta['secret_key']) && substr($meta['secret_key'], 0, 7) == 'sk_test') {
-                    echo "<strong>$this->_('StripeUniversal.test_key_detected', true)</strong>";
+                    echo "<strong>" . $this->_('StripeUniversal.test_key_detected', true) . "</strong>";
                 }
             ?>
+		</li>
+        <li>
+		<?php
+            $this->Form->label($this->_('StripeUniversal.webhook_secret', true));
+            $this->Form->fieldText('webhook_secret', (isset($meta['webhook_secret']) ? $meta['webhook_secret'] : null));
+            ?>
+			<span class="tooltip"><?php $this->_('AppController.tooltip.text');?><div><?php $this->_('StripeUniversal.tooltip_webhook_secret');?></div></span>
 		</li>
 	</ul>
 
