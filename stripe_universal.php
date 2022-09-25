@@ -158,7 +158,8 @@ class StripeUniversal extends NonmerchantGateway
     {
         $this->loadApi();
 
-        if ($session_id = $get['session_id']) {
+        if (array_key_exists('session_id', $get)) {
+            $session_id = $get['session_id'];
             $session = \Stripe\Checkout\Session::retrieve($session_id, [
                 'expand' => ['payment_intent']
             ]);
@@ -228,7 +229,7 @@ class StripeUniversal extends NonmerchantGateway
             ),
             'currency' => $session->currency,
             'status' => $status,
-            'reference_id' => $session->payment_intent,
+            'reference_id' => $session->id,
             'transaction_id' => $session->payment_intent,
             'invoices' => $metadata['invoices'],
         ];
