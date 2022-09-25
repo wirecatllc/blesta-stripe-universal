@@ -6,15 +6,12 @@
             $this->Form->fieldText('secret_key', (isset($meta['secret_key']) ? $meta['secret_key'] : null));
             ?>
 			<span class="tooltip"><?php $this->_('AppController.tooltip.text');?><div><?php $this->_('StripeUniversal.tooltip_secret_key');?></div></span>
-		</li>
-		<li>
             <?php
-                $isTestMode = isset($meta['test_mode']);
-                $this->Form->label($this->_('StripeUniversal.test_mode', true));
-                $this->Form->fieldCheckbox('test_mode', "", $isTestMode);
+                if (isset($meta['secret_key']) && substr($meta['secret_key'], 0, 7) == 'sk_test') {
+                    echo "<strong>You are currently using Test Key! Change to Live key once you are ready.</strong>";
+                }
             ?>
-                <span class="tooltip"><?php $this->_('AppController.tooltip.text');?><div><?php $this->_('StripeUniversal.tooltip_test_mode');?></div></span>
-        </li>
+		</li>
 	</ul>
 
     <div class="title_row">

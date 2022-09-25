@@ -1,7 +1,7 @@
 {
     "version": "1.0.0",
-    "name": "StripeUniversalPayments.name",
-    "description": "StripeUniversalPayments.description",
+    "name": "StripeUniversal.name",
+    "description": "StripeUniversal.description",
     "authors": [
         {
             "name": "WireCat LLC",

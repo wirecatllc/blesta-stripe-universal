@@ -4,7 +4,7 @@
  *
  * The Stripe API can be found at: https://stripe.com/docs/api
  */
-class StripeUniversalPayments extends NonmerchantGateway
+class StripeUniversal extends NonmerchantGateway
 {
     /**
      * @var array An array of meta data for this gateway
@@ -224,7 +224,7 @@ class StripeUniversalPayments extends NonmerchantGateway
         ];
     }
 
-    private function extractMetadata(\Stripe\StripeObject $metadata): bool|array
+    private function extractMetadata(\Stripe\StripeObject $metadata)
     {
         if ($metadata === null) {
             $this->Input->setErrors([
@@ -298,6 +298,11 @@ class StripeUniversalPayments extends NonmerchantGateway
     public function validateConnection($secret_key)
     {
         $success = true;
+        // Skip test if test key is given
+        if (substr($secret_key, 0, 7) == 'sk_test') {
+           return $success;
+        }
+
         try {
             // Attempt to make an API request
             Loader::load(dirname(__FILE__) . DS . 'vendor' . DS . 'stripe' . DS . 'stripe-php' . DS . 'init.php');
@@ -394,9 +399,12 @@ class StripeUniversalPayments extends NonmerchantGateway
             return [];
         }
 
-        return match ($event->type) {
-            'checkout.session.completed' => $this->handleCheckoutSession($event->data->object),
-            default => [],
+        switch ($event->type) {
+            case 'checkout.session.completed':
+                return $this->handleCheckoutSession($event->data->object);
+                break;
         };
+
+        return [];
     }
 }

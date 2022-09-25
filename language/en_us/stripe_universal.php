@@ -16,19 +16,17 @@ $lang['StripeUniversal.!error.payment_expired'] = 'Payment gateway returns that 
 $lang['StripeUniversal.!error.metadata.missing'] = 'Response is missing metadata, please open a support ticket for this transaction.';
 $lang['StripeUniversal.!error.metadata.missing_client_id'] = 'Payment gateway returns invalid metadata, please open a support ticket for this transaction.';
 
-$lang['StripeUniversal.name'] = 'Stripe Payments';
-$lang['StripeUniversal.description'] = 'Uses Stripe Elements and the Payment Request API to automatically handle 3D Secure and SCA to send credit cards directly through Stripe';
+$lang['StripeUniversal.name'] = 'Stripe Universal';
+$lang['StripeUniversal.description'] = 'Uses Stripe Checkout to process payments.';
 
 
 // Settings
-$lang['StripeUniversal.publishable_key'] = 'API Publishable Key';
 $lang['StripeUniversal.secret_key'] = 'API Secret Key';
-$lang['StripeUniversal.tooltip_publishable_key'] = 'Your API Publishable Key is specific to either live or test mode. Be sure you are using the correct key.';
+$lang['StripeUniversal.test_mode'] = 'Enable test mode (Sandbox)';
 $lang['StripeUniversal.tooltip_secret_key'] = 'Your API Secret Key is specific to either live or test mode. Be sure you are using the correct key.';
 
 $lang['StripeUniversal.webhook'] = 'Stripe Webhook';
-$lang['StripeUniversal.webhook_note'] = 'It is recommended to configure the following url as a Webhook for "payment_intent" events in your Stripe account.';
-
+$lang['StripeUniversal.webhook_note'] = 'It is recommended to configure the following url as a Webhook for "checkout_session" events in your Stripe account.';
 
 $lang['StripeUniversal.heading_migrate_accounts'] = 'Migrate Old Payment Accounts';
 $lang['StripeUniversal.text_accounts_remaining'] = 'Accounts Remaining: %1$s'; // Where %1$s is the number of accounts yet to be migrated
