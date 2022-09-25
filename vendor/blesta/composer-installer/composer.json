@@ -1,0 +1,28 @@
+{
+    "name": "blesta/composer-installer",
+    "type": "composer-installer",
+    "license": "MIT",
+    "require": {
+        "composer/installers": "~1.0",
+        "php": ">=5.3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~4.6",
+        "squizlabs/php_codesniffer": "~2.2",
+        "composer/composer": "1.0.*@dev",
+        "satooshi/php-coveralls": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "Blesta\\Composer\\Installer\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Blesta\\Composer\\Installer\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "class": "Blesta\\Composer\\Installer\\Installer"
+    }
+}

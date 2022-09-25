@@ -1,0 +1,26 @@
+
+	<ul>
+		<li>
+			<?php
+            $this->Form->label($this->_('StripeUniversal.secret_key', true));
+            $this->Form->fieldText('secret_key', (isset($meta['secret_key']) ? $meta['secret_key'] : null));
+            ?>
+			<span class="tooltip"><?php $this->_('AppController.tooltip.text');?><div><?php $this->_('StripeUniversal.tooltip_secret_key');?></div></span>
+		</li>
+		<li>
+            <?php
+                $isTestMode = isset($meta['test_mode']);
+                $this->Form->label($this->_('StripeUniversal.test_mode', true));
+                $this->Form->fieldCheckbox('test_mode', "", $isTestMode);
+            ?>
+                <span class="tooltip"><?php $this->_('AppController.tooltip.text');?><div><?php $this->_('StripeUniversal.tooltip_test_mode');?></div></span>
+        </li>
+	</ul>
+
+    <div class="title_row">
+        <h3><?php $this->_('StripeUniversal.webhook'); ?></h3>
+    </div>
+    <div class="pad">
+        <p><?php $this->_('StripeUniversal.webhook_note'); ?></p>
+        <code><?php echo Configure::get('Blesta.gw_callback_url') . Configure::get('Blesta.company_id') . '/stripe_universal/'; ?></code>
+    </div>

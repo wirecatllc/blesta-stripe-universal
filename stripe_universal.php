@@ -1,0 +1,402 @@
+<?php
+/**
+ * Stripe Universal processing gateway. Redirect user to Stripe pre-build page
+ *
+ * The Stripe API can be found at: https://stripe.com/docs/api
+ */
+class StripeUniversalPayments extends NonmerchantGateway
+{
+    /**
+     * @var array An array of meta data for this gateway
+     */
+    private $meta;
+
+    /**
+     * Construct a new merchant gateway
+     */
+    public function __construct()
+    {
+        $this->loadConfig(dirname(__FILE__) . DS . 'config.json');
+
+        // Load components required by this module
+        Loader::loadComponents($this, ['Input']);
+
+        // Load the language required by this module
+        Language::loadLang('stripe_universal', null, dirname(__FILE__) . DS . 'language' . DS);
+
+        // Load product configuration required by this module
+        Configure::load('stripe_universal', dirname(__FILE__) . DS . 'config' . DS);
+
+        $this->loadApi();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setCurrency($currency)
+    {
+        $this->currency = $currency;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getSettings(array $meta = null)
+    {
+        // Load the view into this object, so helpers can be automatically added to the view
+        $this->view = new View('settings', 'default');
+        $this->view->setDefaultView('components' . DS . 'gateways' . DS . 'nonmerchant' . DS . 'stripe_universal' . DS);
+
+        // Load the helpers required for this view
+        Loader::loadHelpers($this, ['Form', 'Html']);
+        $this->view->set('meta', $meta);
+
+        return $this->view->fetch();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function editSettings(array $meta)
+    {
+        // Validate the given meta data to ensure it meets the requirements
+        $rules = [
+            'secret_key' => [
+                'empty' => [
+                    'rule' => 'isEmpty',
+                    'negate' => true,
+                    'message' => Language::_('StripeUniversalPayments.!error.secret_key.empty', true)
+                ],
+                'valid' => [
+                    'rule' => [[$this, 'validateConnection']],
+                    'message' => Language::_('StripeUniversalPayments.!error.secret_key.valid', true)
+                ]
+            ]
+        ];
+
+        // @TODO enable a subset of available payment method
+        // https://stripe.com/docs/api/checkout/sessions/create#create_checkout_session-customer
+
+        $this->Input->setRules($rules);
+
+        return $meta;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function encryptableFields()
+    {
+        return ['secret_key'];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setMeta(array $meta = null)
+    {
+        $this->meta = $meta;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function requiresCustomerPresent()
+    {
+        return true;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function buildProcess($contact_info, $amount, $invoice_amounts = null, $options = null)
+    {
+        // Load the view into this object, so helpers can be automatically added to the view
+        $this->view = $this->makeView(
+            'payment_button',
+            'default',
+            str_replace(ROOTWEBDIR, '', dirname(__FILE__) . DS)
+        );
+
+        // Load the helpers required for this view
+        Loader::loadHelpers($this, ['Form', 'Html']);
+
+        // Find Client
+        Loader::loadModels($this, ['Contacts']);
+        $contact = $this->Contacts->get($contact_info['id']);
+
+        // Create Payment Session for user to jump to
+        // FIXME: Find a way to reuse existing session instead of creating one every time
+        $session = \Stripe\Checkout\Session::create([
+            'customer_email' => $contact->email,
+            'line_items' => $this->getLineItems($amount, $invoice_amounts),
+            'mode' => 'payment',
+            'success_url' => $options['return_url'] . "/?session_id={CHECKOUT_SESSION_ID}",
+            'cancel_url' => $options['return_url'] . "/?canceled=true",
+            'metadata' => array(
+                'client_id' => $contact_info['client_id']
+            )
+        ]);
+
+
+        $this->view->set('goto_url', $session->url);
+
+        return $this->view->fetch();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function success(array $get, array $post)
+    {
+        if ($session_id = $get['session_id']) {
+            $session = \Stripe\Checkout\Session::retrieve($session_id, [
+                'expand' => ['payment_intent']
+            ]);
+            return $this->handleCheckoutSession($session);
+        }
+
+        if ($get['canceled'] === "true") {
+            $this->Input->setErrors([
+                "exceptions" => [
+                    'message' => Language::_('StripeUniversalPayments.!error.payment_canceled', true),
+                ]
+            ]);
+        } else {
+            $this->Input->setErrors([
+                "session_id" => [
+                    'message' => Language::_('StripeUniversalPayments.!error.session_id.missing', true),
+                ]
+            ]);
+        }
+
+
+        return [];
+    }
+
+    private function handleCheckoutSession(\Stripe\Checkout\Session $session) {
+        $status = "pending";
+        if ($session->payment_status === "paid") {
+            $status = "approved";
+        } else {
+            switch ($session->status) {
+                case "expired":
+                    $this->Input->setErrors([
+                        'payment_status' => [
+                            'message' => Language::_('StripeUniversalPayments.!error.payment_expired', true),
+                        ]
+                    ]);
+                    $status = "void";
+                    break;
+                case "complete":
+                    $this->Input->setErrors([
+                        'payment_status' => [
+                            'message' => Language::_('StripeUniversalPayments.!error.payment_in_progress', true),
+                        ]
+                    ]);
+                    break;
+                case "open":
+                default:
+                    $this->Input->setErrors([
+                        'payment_status' => [
+                            'message' => Language::_('StripeUniversalPayments.!error.payment_not_received', true),
+                        ]
+                    ]);
+            }
+        }
+
+        $metadata = $this->extractMetadata($session->metadata);
+        if ($metadata === false) {
+            return [];
+        }
+
+        return [
+            'client_id' => $metadata['client_id'],
+            'amount' => $this->formatAmount(
+                $session->payment_intent->amount ?? $session->payment_intent->amount_received ?? 0,
+                strtoupper($session->payment_intent->currency ?? ''),
+                'from'
+            ),
+            'currency' => $session->payment_intent->currency ?? null,
+            'status' => $status,
+            'reference_id' => $session->payment_intent->id,
+            'transaction_id' => $session->payment_intent->id,
+        ];
+    }
+
+    private function extractMetadata(\Stripe\StripeObject $metadata): bool|array
+    {
+        if ($metadata === null) {
+            $this->Input->setErrors([
+                'metadata' => [
+                    'message' => Language::_('StripeUniversalPayments.!error.metadata.missing', true),
+                ]
+            ]);
+
+            return false;
+        }
+        $client_id = $metadata->toArray()['client_id'];
+
+        if (!$client_id) {
+            $this->Input->setErrors([
+                'metadata' => [
+                    'message' => Language::_('StripeUniversalPayments.!error.metadata.missing_client_id', true),
+                ]
+            ]);
+
+            return false;
+        }
+
+        return [
+            'client_id' => $client_id,
+        ];
+    }
+
+    /**
+     * Loads the API if not already loaded
+     */
+    private function loadApi()
+    {
+        Loader::load(dirname(__FILE__) . DS . 'vendor' . DS . 'stripe' . DS . 'stripe-php' . DS . 'init.php');
+        Stripe\Stripe::setApiKey((isset($this->meta['secret_key']) ? $this->meta['secret_key'] : null));
+
+        // Include identifying information about this being a gateway for Blesta
+        Stripe\Stripe::setAppInfo('Blesta ' . $this->getName(), $this->getVersion(), 'https://blesta.com');
+    }
+
+
+    /**
+     * Convert amount from decimal value to integer representation of cents
+     *
+     * @param float $amount
+     * @param string $currency
+     * @param string $direction
+     * @return int The amount in cents
+     */
+    private function formatAmount($amount, $currency, $direction = 'to')
+    {
+        $non_decimal_currencies = ['BIF', 'CLP', 'DJF', 'GNF', 'JPY',
+            'KMF', 'KRW', 'MGA', 'PYG', 'RWF', 'VUV', 'XAF', 'XOF', 'XPF'];
+
+        if (is_numeric($amount) && !in_array($currency, $non_decimal_currencies)) {
+            if ($direction == 'to') {
+                $amount *= 100;
+            } else {
+                $amount /= 100;
+            }
+        }
+        return (int)round($amount);
+    }
+
+
+    /**
+     * Checks whether a key can be used to connect to the Stripe API
+     *
+     * @param string $secret_key The API to connect with
+     * @return boolean True if a successful API call was made, false otherwise
+     */
+    public function validateConnection($secret_key)
+    {
+        $success = true;
+        try {
+            // Attempt to make an API request
+            Loader::load(dirname(__FILE__) . DS . 'vendor' . DS . 'stripe' . DS . 'stripe-php' . DS . 'init.php');
+            Stripe\Stripe::setApiKey($secret_key);
+            Stripe\Balance::retrieve();
+        } catch (Exception $e) {
+            $success = false;
+        }
+
+        return $success;
+    }
+
+    /**
+     * Retrieves the description for CC charges
+     *
+     * @param float total amount
+     * @param array|null $invoice_amounts An array of invoice amounts (optional)
+     * @return array[] Line Items
+     */
+    private function getLineItems(float $amount, array $invoice_amounts = null)
+    {
+        $defaultItem = [[
+            'price_data' => [
+                'currency' => $this->getCurrencies(),
+                'product_data' => [
+                    'name' =>  Language::_('StripeUniversalPayments.charge_description_default', true),
+                ],
+                'unit_amount_decimal' => $amount,
+            ],
+            'quantity' => 1,
+        ]];
+
+        // No invoice amounts, set a default description
+        if (empty($invoice_amounts)) {
+            return $defaultItem;
+        }
+
+        Loader::loadModels($this, ['Invoices']);
+
+        // Create a list of invoices being paid
+        $id_codes = [];
+        foreach ($invoice_amounts as $invoice_amount) {
+            if (($invoice = $this->Invoices->get($invoice_amount['invoice_id']))) {
+                $id_codes[] = $invoice->id_code;
+            }
+        }
+
+        // Use the default description if there are no valid invoices
+        if (empty($id_codes)) {
+            return $defaultItem;
+        }
+
+        // Truncate the description to a max of 1000 characters since that is Stripe's limit for the description field
+        $description = Language::_('StripeUniversalPayments.charge_description', true, implode(', ', $id_codes));
+        if (strlen($description) > 1000) {
+            Loader::loadComponents($this, ['DataStructure']);
+            $description = $this->DataStructure->create('string');
+        }
+
+        return [[
+            'price_data' => [
+                'currency' => $this->getCurrencies(),
+                'product_data' => [
+                    'name' =>  Language::_('StripeUniversalPayments.charge_description_default', true),
+                    'description' => $description,
+                ],
+                'unit_amount_decimal' => $amount,
+            ],
+            'quantity' => 1,
+        ]];
+    }
+
+
+    /**
+     * Validates the incoming POST/GET response from the gateway to ensure it is
+     * legitimate and can be trusted.
+     *
+     * @param array $get The GET data for this request
+     * @param array $post The POST data for this request
+     * @return array An array of transaction data, sets any errors using Input if the data fails to validate
+     */
+    public function validate(array $get, array $post)
+    {
+        // Get event payload
+        $payload = @file_get_contents('php://input');
+        try {
+            $event = \Stripe\Event::constructFrom(json_decode($payload, true));
+        } catch (\UnexpectedValueException $e) {
+            $this->Input->setErrors([
+                'event' => [
+                    'message' => $e->getMessage(),
+                ]
+            ]);
+            return [];
+        }
+
+        return match ($event->type) {
+            'checkout.session.completed' => $this->handleCheckoutSession($event->data->object),
+            default => [],
+        };
+    }
+}

@@ -1,0 +1,10 @@
+{
+    "name": "wirecatllc/stripe_universal",
+    "description": "Stripe Universal",
+    "license": "MIT",
+    "type": "blesta-gateway-nonmerchant",
+    "require": {
+        "blesta/composer-installer": "~1.0",
+        "stripe/stripe-php": "~7.0"
+    }
+}

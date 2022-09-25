@@ -1,0 +1,5 @@
+    <a target="_blank"
+        href='<?php echo $goto_url ?>'
+    >
+        <img src="<?php echo $this->Html->safe($this->view_dir . 'images/button.png');?>" alt="payment logo"></img>
+    </a>
