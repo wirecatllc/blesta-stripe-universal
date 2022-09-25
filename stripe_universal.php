@@ -135,7 +135,8 @@ class StripeUniversal extends NonmerchantGateway
                 'success_url' => $options['return_url'] . "&session_id={CHECKOUT_SESSION_ID}",
                 'cancel_url' => $options['return_url'] . "&canceled=true",
                 'metadata' => array(
-                    'client_id' => $contact_info['client_id']
+                    'client_id' => $contact_info['client_id'],
+                    'invoices' => base64_encode(serialize($invoice_amounts)),
                 )
             ];
             $session = \Stripe\Checkout\Session::create($sessionObj);
@@ -229,6 +230,7 @@ class StripeUniversal extends NonmerchantGateway
             'status' => $status,
             'reference_id' => $session->payment_intent,
             'transaction_id' => $session->payment_intent,
+            'invoices' => $metadata['invoices'],
         ];
     }
 
@@ -243,9 +245,11 @@ class StripeUniversal extends NonmerchantGateway
 
             return false;
         }
-        $client_id = $metadata->toArray()['client_id'];
 
-        if (!$client_id) {
+        $metadata = $metadata->toArray();
+        $client_id = $metadata['client_id'];
+
+        if (!$metadata['client_id']) {
             $this->Input->setErrors([
                 'metadata' => [
                     'message' => Language::_('StripeUniversal.!error.metadata.missing_client_id', true),
@@ -257,6 +261,7 @@ class StripeUniversal extends NonmerchantGateway
 
         return [
             'client_id' => $client_id,
+            'invoices' => unserialize(base64_decode($metadata['invoices'])),
         ];
     }
 
