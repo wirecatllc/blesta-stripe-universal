@@ -63,11 +63,11 @@ class StripeUniversal extends NonmerchantGateway
                 'empty' => [
                     'rule' => 'isEmpty',
                     'negate' => true,
-                    'message' => Language::_('StripeUniversalPayments.!error.secret_key.empty', true)
+                    'message' => Language::_('StripeUniversal.!error.secret_key.empty', true)
                 ],
                 'valid' => [
                     'rule' => [[$this, 'validateConnection']],
-                    'message' => Language::_('StripeUniversalPayments.!error.secret_key.valid', true)
+                    'message' => Language::_('StripeUniversal.!error.secret_key.valid', true)
                 ]
             ]
         ];
@@ -119,7 +119,7 @@ class StripeUniversal extends NonmerchantGateway
         );
 
         // Load the helpers required for this view
-        Loader::loadHelpers($thils, ['Form', 'Html']);
+        Loader::loadHelpers($this, ['Form', 'Html']);
 
         // Find Client
         Loader::loadModels($this, ['Contacts']);
@@ -127,16 +127,22 @@ class StripeUniversal extends NonmerchantGateway
 
         // Create Payment Session for user to jump to
         // FIXME: Find a way to reuse existing session instead of creating one every time
-        $session = \Stripe\Checkout\Session::create([
-            'customer_email' => $contact->email,
-            'line_items' => $this->getLineItems($amount, $invoice_amounts),
-            'mode' => 'payment',
-            'success_url' => $options['return_url'] . "/?session_id={CHECKOUT_SESSION_ID}",
-            'cancel_url' => $options['return_url'] . "/?canceled=true",
-            'metadata' => array(
-                'client_id' => $contact_info['client_id']
-            )
-        ]);
+        try {
+            $sessionObj = [
+                'customer_email' => $contact->email,
+                'line_items' => $this->getLineItems($amount, $invoice_amounts),
+                'mode' => 'payment',
+                'success_url' => $options['return_url'] . "&session_id={CHECKOUT_SESSION_ID}",
+                'cancel_url' => $options['return_url'] . "&canceled=true",
+                'metadata' => array(
+                    'client_id' => $contact_info['client_id']
+                )
+            ];
+            $session = \Stripe\Checkout\Session::create($sessionObj);
+        } catch (Exception $e) {
+            $this->Input->setErrors(['api' => ['internal' => $e->getMessage()]]);
+            return;
+        }
 
 
         $this->view->set('goto_url', $session->url);
@@ -161,13 +167,13 @@ class StripeUniversal extends NonmerchantGateway
         if ($get['canceled'] === "true") {
             $this->Input->setErrors([
                 "exceptions" => [
-                    'message' => Language::_('StripeUniversalPayments.!error.payment_canceled', true),
+                    'message' => Language::_('StripeUniversal.!error.payment_canceled', true),
                 ]
             ]);
         } else {
             $this->Input->setErrors([
                 "session_id" => [
-                    'message' => Language::_('StripeUniversalPayments.!error.session_id.missing', true),
+                    'message' => Language::_('StripeUniversal.!error.session_id.missing', true),
                 ]
             ]);
         }
@@ -185,7 +191,7 @@ class StripeUniversal extends NonmerchantGateway
                 case "expired":
                     $this->Input->setErrors([
                         'payment_status' => [
-                            'message' => Language::_('StripeUniversalPayments.!error.payment_expired', true),
+                            'message' => Language::_('StripeUniversal.!error.payment_expired', true),
                         ]
                     ]);
                     $status = "void";
@@ -193,7 +199,7 @@ class StripeUniversal extends NonmerchantGateway
                 case "complete":
                     $this->Input->setErrors([
                         'payment_status' => [
-                            'message' => Language::_('StripeUniversalPayments.!error.payment_in_progress', true),
+                            'message' => Language::_('StripeUniversal.!error.payment_in_progress', true),
                         ]
                     ]);
                     break;
@@ -201,7 +207,7 @@ class StripeUniversal extends NonmerchantGateway
                 default:
                     $this->Input->setErrors([
                         'payment_status' => [
-                            'message' => Language::_('StripeUniversalPayments.!error.payment_not_received', true),
+                            'message' => Language::_('StripeUniversal.!error.payment_not_received', true),
                         ]
                     ]);
             }
@@ -215,14 +221,14 @@ class StripeUniversal extends NonmerchantGateway
         return [
             'client_id' => $metadata['client_id'],
             'amount' => $this->formatAmount(
-                $session->payment_intent->amount ?? $session->payment_intent->amount_received ?? 0,
-                strtoupper($session->payment_intent->currency ?? ''),
+                $session->amount_total,
+                strtoupper($session->currency),
                 'from'
             ),
-            'currency' => $session->payment_intent->currency ?? null,
+            'currency' => $session->currency,
             'status' => $status,
-            'reference_id' => $session->payment_intent->id,
-            'transaction_id' => $session->payment_intent->id,
+            'reference_id' => $session->payment_intent,
+            'transaction_id' => $session->payment_intent,
         ];
     }
 
@@ -231,7 +237,7 @@ class StripeUniversal extends NonmerchantGateway
         if ($metadata === null) {
             $this->Input->setErrors([
                 'metadata' => [
-                    'message' => Language::_('StripeUniversalPayments.!error.metadata.missing', true),
+                    'message' => Language::_('StripeUniversal.!error.metadata.missing', true),
                 ]
             ]);
 
@@ -242,7 +248,7 @@ class StripeUniversal extends NonmerchantGateway
         if (!$client_id) {
             $this->Input->setErrors([
                 'metadata' => [
-                    'message' => Language::_('StripeUniversalPayments.!error.metadata.missing_client_id', true),
+                    'message' => Language::_('StripeUniversal.!error.metadata.missing_client_id', true),
                 ]
             ]);
 
@@ -331,9 +337,9 @@ class StripeUniversal extends NonmerchantGateway
     {
         $defaultItem = [[
             'price_data' => [
-                'currency' => $this->getCurrencies(),
+                'currency' =>  $this->currency,
                 'product_data' => [
-                    'name' =>  Language::_('StripeUniversalPayments.charge_description_default', true),
+                    'name' =>  Language::_('StripeUniversal.charge_description_default', true),
                 ],
                 'unit_amount_decimal' => $amount,
             ],
@@ -350,8 +356,11 @@ class StripeUniversal extends NonmerchantGateway
         // Create a list of invoices being paid
         $id_codes = [];
         foreach ($invoice_amounts as $invoice_amount) {
-            if (($invoice = $this->Invoices->get($invoice_amount['invoice_id']))) {
-                $id_codes[] = $invoice->id_code;
+            if (($invoice = $this->Invoices->get($invoice_amount['id']))) {
+                $id_codes[] = array(
+                    "id" => $invoice->id_code,
+                    "amount" => $invoice_amount['amount'],
+                );
             }
         }
 
@@ -360,24 +369,21 @@ class StripeUniversal extends NonmerchantGateway
             return $defaultItem;
         }
 
-        // Truncate the description to a max of 1000 characters since that is Stripe's limit for the description field
-        $description = Language::_('StripeUniversalPayments.charge_description', true, implode(', ', $id_codes));
-        if (strlen($description) > 1000) {
-            Loader::loadComponents($this, ['DataStructure']);
-            $description = $this->DataStructure->create('string');
+        $result = [];
+        foreach ($id_codes as $id_code) {
+            $result[] = [
+                'price_data' => [
+                    'currency' =>  $this->currency,
+                    'product_data' => [
+                        'name' =>  Language::_('StripeUniversal.charge_description', true, $id_code['id']),
+                    ],
+                    'unit_amount' => $this->formatAmount($id_code['amount'], $this->currency, 'to'),
+                ],
+                'quantity' => 1,
+            ];
         }
 
-        return [[
-            'price_data' => [
-                'currency' => $this->getCurrencies(),
-                'product_data' => [
-                    'name' =>  Language::_('StripeUniversalPayments.charge_description_default', true),
-                    'description' => $description,
-                ],
-                'unit_amount_decimal' => $amount,
-            ],
-            'quantity' => 1,
-        ]];
+        return $result;
     }
 
 
