@@ -26,8 +26,6 @@ class StripeUniversal extends NonmerchantGateway
 
         // Load product configuration required by this module
         Configure::load('stripe_universal', dirname(__FILE__) . DS . 'config' . DS);
-
-        $this->loadApi();
     }
 
     /**
@@ -111,6 +109,8 @@ class StripeUniversal extends NonmerchantGateway
      */
     public function buildProcess($contact_info, $amount, $invoice_amounts = null, $options = null)
     {
+        $this->loadApi();
+
         // Load the view into this object, so helpers can be automatically added to the view
         $this->view = $this->makeView(
             'payment_button',
@@ -119,7 +119,7 @@ class StripeUniversal extends NonmerchantGateway
         );
 
         // Load the helpers required for this view
-        Loader::loadHelpers($this, ['Form', 'Html']);
+        Loader::loadHelpers($thils, ['Form', 'Html']);
 
         // Find Client
         Loader::loadModels($this, ['Contacts']);
@@ -149,6 +149,8 @@ class StripeUniversal extends NonmerchantGateway
      */
     public function success(array $get, array $post)
     {
+        $this->loadApi();
+
         if ($session_id = $get['session_id']) {
             $session = \Stripe\Checkout\Session::retrieve($session_id, [
                 'expand' => ['payment_intent']
@@ -253,11 +255,13 @@ class StripeUniversal extends NonmerchantGateway
     }
 
     /**
-     * Loads the API if not already loaded
+     * Loads the API if not already loaded, can only be called after constructor has done its work
      */
     private function loadApi()
     {
-        Loader::load(dirname(__FILE__) . DS . 'vendor' . DS . 'stripe' . DS . 'stripe-php' . DS . 'init.php');
+        if (!class_exists('\Stripe\Stripe', false)) {
+            Loader::load(dirname(__FILE__) . DS . 'vendor' . DS . 'stripe' . DS . 'stripe-php' . DS . 'init.php');
+        }
         Stripe\Stripe::setApiKey((isset($this->meta['secret_key']) ? $this->meta['secret_key'] : null));
 
         // Include identifying information about this being a gateway for Blesta
@@ -297,6 +301,8 @@ class StripeUniversal extends NonmerchantGateway
      */
     public function validateConnection($secret_key)
     {
+        $this->loadApi();
+
         $success = true;
         // Skip test if test key is given
         if (substr($secret_key, 0, 7) == 'sk_test') {
@@ -305,7 +311,6 @@ class StripeUniversal extends NonmerchantGateway
 
         try {
             // Attempt to make an API request
-            Loader::load(dirname(__FILE__) . DS . 'vendor' . DS . 'stripe' . DS . 'stripe-php' . DS . 'init.php');
             Stripe\Stripe::setApiKey($secret_key);
             Stripe\Balance::retrieve();
         } catch (Exception $e) {
@@ -386,6 +391,8 @@ class StripeUniversal extends NonmerchantGateway
      */
     public function validate(array $get, array $post)
     {
+        $this->loadApi();
+
         // Get event payload
         $payload = @file_get_contents('php://input');
         try {

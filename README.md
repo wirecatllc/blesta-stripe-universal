@@ -7,11 +7,11 @@ This is a non-merchant gateway for Blesta that integrates with [Stripe](https://
 Upload the source code to a /components/gateways/nonmerchant/stripe_universal/ directory within
 your Blesta installation path.
 
-    For example:
+For example:
 
-    ```
-    /var/www/html/blesta/components/merchant/stripe_universal/
-    ```
+```
+/var/www/html/blesta/components/nonmerchant/stripe_universal/
+```
 
 3. Log in to your admin Blesta account and navigate to
 > Settings > Payment Gateways
@@ -22,4 +22,6 @@ your Blesta installation path.
 
 ### Blesta Compatibility
 
+```
 >= v4.9.0
+```
