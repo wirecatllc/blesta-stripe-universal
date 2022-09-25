@@ -19,20 +19,13 @@ $lang['StripeUniversal.!error.metadata.missing_client_id'] = 'Payment gateway re
 $lang['StripeUniversal.name'] = 'Stripe Universal';
 $lang['StripeUniversal.description'] = 'Uses Stripe Checkout to process payments.';
 
-
 // Settings
 $lang['StripeUniversal.secret_key'] = 'API Secret Key';
-$lang['StripeUniversal.test_mode'] = 'Enable test mode (Sandbox)';
+$lang['StripeUniversal.test_key_detected'] = 'You are currently using Test Key! Change to Live key once you are ready.';
 $lang['StripeUniversal.tooltip_secret_key'] = 'Your API Secret Key is specific to either live or test mode. Be sure you are using the correct key.';
 
 $lang['StripeUniversal.webhook'] = 'Stripe Webhook';
-$lang['StripeUniversal.webhook_note'] = 'It is recommended to configure the following url as a Webhook for "checkout_session" events in your Stripe account.';
-
-$lang['StripeUniversal.heading_migrate_accounts'] = 'Migrate Old Payment Accounts';
-$lang['StripeUniversal.text_accounts_remaining'] = 'Accounts Remaining: %1$s'; // Where %1$s is the number of accounts yet to be migrated
-$lang['StripeUniversal.text_migrate_accounts'] = 'You can automatically migrate payment accounts stored offsite by the old Stripe gateway over to this Stripe Payments gateway. Accounts that are not stored offsite must be migrated by manually creating new payment accounts. In order to prevent timeouts migrations will be done in batches of %1$s. Run this as many times as needed to migrate all payment accounts.'; // Where %1$s is the batch size
-$lang['StripeUniversal.warning_migrate_accounts'] = 'Do not uninstall the old Stripe gateway until you finish using this migration tool. Doing so will make the tool inaccessible.';
-$lang['StripeUniversal.migrate_accounts'] = 'Migrate Accounts';
+$lang['StripeUniversal.webhook_note'] = 'It is recommended to configure the following url as a Webhook for "checkout.session.completed" events in your Stripe account.';
 
 // Charge description
 $lang['StripeUniversal.charge_description_default'] = 'Charge for specified amount';
