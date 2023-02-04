@@ -297,12 +297,14 @@ class StripeUniversal extends NonmerchantGateway
             'KMF', 'KRW', 'MGA', 'PYG', 'RWF', 'VUV', 'XAF', 'XOF', 'XPF'];
 
         if (is_numeric($amount) && !in_array($currency, $non_decimal_currencies)) {
-            if ($direction == 'to') {
+            if ($direction === 'to') {
                 $amount *= 100;
             } else {
                 $amount /= 100;
+                return round($amount, 2);
             }
         }
+        
         return (int)round($amount);
     }
 
