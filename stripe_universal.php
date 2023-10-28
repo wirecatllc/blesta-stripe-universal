@@ -229,7 +229,7 @@ class StripeUniversal extends NonmerchantGateway
                 strtoupper($session->currency),
                 'from'
             ),
-            'currency' => $session->currency,
+            'currency' => strtoupper($session->currency),
             'status' => $status,
             'reference_id' => $session->id,
             'transaction_id' => $session->payment_intent,
@@ -351,7 +351,7 @@ class StripeUniversal extends NonmerchantGateway
                 'product_data' => [
                     'name' =>  Language::_('StripeUniversal.charge_description_default', true),
                 ],
-                'unit_amount_decimal' => $amount,
+                'unit_amount_decimal' => $this->formatAmount($amount, $this->currency, 'to'),
             ],
             'quantity' => 1,
         ]];
