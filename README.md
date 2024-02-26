@@ -21,12 +21,12 @@ Checkout page support all payment methods (From Alipay, WeChat, Google Pay, Appl
 
 ## Install the Gateway
 
-Upload the source code to `/components/gateways/nonmerchant/blesta_stripe_universal/` directory within your Blesta installation path.
+Upload the source code to `/components/gateways/nonmerchant/stripe_universal/` directory within your Blesta installation path.
 
 For example:
 
 ```
-/var/www/html/blesta/components/nonmerchant/blesta_stripe_universal/
+/var/www/html/blesta/components/nonmerchant/stripe_universal/
 ```
 
 1. Log in to your admin Blesta account
