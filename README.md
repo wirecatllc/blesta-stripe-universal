@@ -11,13 +11,13 @@ Checkout page support all payment methods (From Alipay, WeChat, Google Pay, Appl
 - Generate `Stripe/Checkout/Session` checkout link and verify&record payment if completed. 
 - Partial webhook support (see below)
 - Separate items for multiple invoices checkout
+- A nice redirect image provided by [@xboxfly15](https://github.com/xboxfly15)
 
 ### TODO
 
 - Support webhook events but it does not handle async payment(ACH, etc.) for now. Webhook at this stage helps to capture payments that client failed to redirect back to website 
 - Refund, Void transaction
 - Disable payment type in settings
-- Better Redirect Pictures :)
 
 ## Install the Gateway
 
@@ -34,6 +34,12 @@ For example:
 3. Find the Stripe Universal gateway
 4. Click the "Install" button
 5. Profit!
+
+### Configuring Redirect Image
+
+We have two version here: one with Alipay, and one without it.
+
+If you would like to use the one without Alipay, rename the `views/default/images/button-no_alipay.png` to `button.png`. Possibly this would be an option in the setting in the future.
 
 ### Compatibility
 
