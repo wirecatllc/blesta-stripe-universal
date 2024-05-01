@@ -222,16 +222,28 @@ class StripeUniversal extends NonmerchantGateway
             return [];
         }
 
+        $currency = strtoupper($session->currency);
+        $amount = $this->formatAmount(
+            $session->amount_total,
+            $currency,
+            'from'
+        );
+
+        if (isset($session->currency_conversion)) {
+            $currency = $session->currency_conversion->source_currency;
+            $amount = $this->formatAmount(
+                $session->currency_conversion->amount_total,
+                $currency,
+                'from'
+            );
+        }
+
         return [
             'client_id' => $metadata['client_id'],
-            'amount' => $this->formatAmount(
-                $session->amount_total,
-                strtoupper($session->currency),
-                'from'
-            ),
-            'currency' => strtoupper($session->currency),
+            'amount' => $amount,
+            'currency' => $currency,
             'status' => $status,
-            'reference_id' => $session->id,
+            'reference_id' => (isset($session->customer_email) ? $session->customer_email : $session->id),
             'transaction_id' => $session->payment_intent,
             'invoices' => $metadata['invoices'],
         ];
