@@ -4,6 +4,12 @@
 
 namespace Stripe\Service;
 
+/**
+ * @phpstan-import-type RequestOptionsArray from \Stripe\Util\RequestOptions
+ */
+/**
+ * @psalm-import-type RequestOptionsArray from \Stripe\Util\RequestOptions
+ */
 class InvoiceService extends \Stripe\Service\AbstractService
 {
     /**
@@ -12,7 +18,7 @@ class InvoiceService extends \Stripe\Service\AbstractService
      * invoices appearing first.
      *
      * @param null|array $params
-     * @param null|array|\Stripe\Util\RequestOptions $opts
+     * @param null|RequestOptionsArray|\Stripe\Util\RequestOptions $opts
      *
      * @throws \Stripe\Exception\ApiErrorException if the request fails
      *
@@ -31,11 +37,11 @@ class InvoiceService extends \Stripe\Service\AbstractService
      *
      * @param string $parentId
      * @param null|array $params
-     * @param null|array|\Stripe\Util\RequestOptions $opts
+     * @param null|RequestOptionsArray|\Stripe\Util\RequestOptions $opts
      *
      * @throws \Stripe\Exception\ApiErrorException if the request fails
      *
-     * @return \Stripe\Collection<\Stripe\LineItem>
+     * @return \Stripe\Collection<\Stripe\InvoiceLineItem>
      */
     public function allLines($parentId, $params = null, $opts = null)
     {
@@ -43,15 +49,13 @@ class InvoiceService extends \Stripe\Service\AbstractService
     }
 
     /**
-     * This endpoint creates a draft invoice for a given customer. The draft invoice
-     * created pulls in all pending invoice items on that customer, including
-     * prorations. The invoice remains a draft until you <a
-     * href="#finalize_invoice">finalize</a> the invoice, which allows you to <a
-     * href="#pay_invoice">pay</a> or <a href="#send_invoice">send</a> the invoice to
-     * your customers.
+     * This endpoint creates a draft invoice for a given customer. The invoice remains
+     * a draft until you <a href="#finalize_invoice">finalize</a> the invoice, which
+     * allows you to <a href="#pay_invoice">pay</a> or <a href="#send_invoice">send</a>
+     * the invoice to your customers.
      *
      * @param null|array $params
-     * @param null|array|\Stripe\Util\RequestOptions $opts
+     * @param null|RequestOptionsArray|\Stripe\Util\RequestOptions $opts
      *
      * @throws \Stripe\Exception\ApiErrorException if the request fails
      *
@@ -63,6 +67,40 @@ class InvoiceService extends \Stripe\Service\AbstractService
     }
 
     /**
+     * At any time, you can preview the upcoming invoice for a customer. This will show
+     * you all the charges that are pending, including subscription renewal charges,
+     * invoice item charges, etc. It will also show you any discounts that are
+     * applicable to the invoice.
+     *
+     * Note that when you are viewing an upcoming invoice, you are simply viewing a
+     * preview – the invoice has not yet been created. As such, the upcoming invoice
+     * will not show up in invoice listing calls, and you cannot use the API to pay or
+     * edit the invoice. If you want to change the amount that your customer will be
+     * billed, you can add, remove, or update pending invoice items, or update the
+     * customer’s discount.
+     *
+     * You can preview the effects of updating a subscription, including a preview of
+     * what proration will take place. To ensure that the actual proration is
+     * calculated exactly the same as the previewed proration, you should pass the
+     * <code>subscription_details.proration_date</code> parameter when doing the actual
+     * subscription update. The recommended way to get only the prorations being
+     * previewed is to consider only proration line items where
+     * <code>period[start]</code> is equal to the
+     * <code>subscription_details.proration_date</code> value passed in the request.
+     *
+     * @param null|array $params
+     * @param null|RequestOptionsArray|\Stripe\Util\RequestOptions $opts
+     *
+     * @throws \Stripe\Exception\ApiErrorException if the request fails
+     *
+     * @return \Stripe\Invoice
+     */
+    public function createPreview($params = null, $opts = null)
+    {
+        return $this->request('post', '/v1/invoices/create_preview', $params, $opts);
+    }
+
+    /**
      * Permanently deletes a one-off invoice draft. This cannot be undone. Attempts to
      * delete invoices that are no longer in a draft state will fail; once an invoice
      * has been finalized or if an invoice is for a subscription, it must be <a
@@ -70,7 +108,7 @@ class InvoiceService extends \Stripe\Service\AbstractService
      *
      * @param string $id
      * @param null|array $params
-     * @param null|array|\Stripe\Util\RequestOptions $opts
+     * @param null|RequestOptionsArray|\Stripe\Util\RequestOptions $opts
      *
      * @throws \Stripe\Exception\ApiErrorException if the request fails
      *
@@ -88,7 +126,7 @@ class InvoiceService extends \Stripe\Service\AbstractService
      *
      * @param string $id
      * @param null|array $params
-     * @param null|array|\Stripe\Util\RequestOptions $opts
+     * @param null|RequestOptionsArray|\Stripe\Util\RequestOptions $opts
      *
      * @throws \Stripe\Exception\ApiErrorException if the request fails
      *
@@ -105,7 +143,7 @@ class InvoiceService extends \Stripe\Service\AbstractService
      *
      * @param string $id
      * @param null|array $params
-     * @param null|array|\Stripe\Util\RequestOptions $opts
+     * @param null|RequestOptionsArray|\Stripe\Util\RequestOptions $opts
      *
      * @throws \Stripe\Exception\ApiErrorException if the request fails
      *
@@ -125,7 +163,7 @@ class InvoiceService extends \Stripe\Service\AbstractService
      *
      * @param string $id
      * @param null|array $params
-     * @param null|array|\Stripe\Util\RequestOptions $opts
+     * @param null|RequestOptionsArray|\Stripe\Util\RequestOptions $opts
      *
      * @throws \Stripe\Exception\ApiErrorException if the request fails
      *
@@ -141,7 +179,7 @@ class InvoiceService extends \Stripe\Service\AbstractService
      *
      * @param string $id
      * @param null|array $params
-     * @param null|array|\Stripe\Util\RequestOptions $opts
+     * @param null|RequestOptionsArray|\Stripe\Util\RequestOptions $opts
      *
      * @throws \Stripe\Exception\ApiErrorException if the request fails
      *
@@ -161,7 +199,7 @@ class InvoiceService extends \Stripe\Service\AbstractService
      * during outages. Search functionality is not available to merchants in India.
      *
      * @param null|array $params
-     * @param null|array|\Stripe\Util\RequestOptions $opts
+     * @param null|RequestOptionsArray|\Stripe\Util\RequestOptions $opts
      *
      * @throws \Stripe\Exception\ApiErrorException if the request fails
      *
@@ -184,7 +222,7 @@ class InvoiceService extends \Stripe\Service\AbstractService
      *
      * @param string $id
      * @param null|array $params
-     * @param null|array|\Stripe\Util\RequestOptions $opts
+     * @param null|RequestOptionsArray|\Stripe\Util\RequestOptions $opts
      *
      * @throws \Stripe\Exception\ApiErrorException if the request fails
      *
@@ -210,16 +248,15 @@ class InvoiceService extends \Stripe\Service\AbstractService
      *
      * You can preview the effects of updating a subscription, including a preview of
      * what proration will take place. To ensure that the actual proration is
-     * calculated exactly the same as the previewed proration, you should pass a
-     * <code>proration_date</code> parameter when doing the actual subscription update.
-     * The value passed in should be the same as the
-     * <code>subscription_proration_date</code> returned on the upcoming invoice
-     * resource. The recommended way to get only the prorations being previewed is to
-     * consider only proration line items where <code>period[start]</code> is equal to
-     * the <code>subscription_proration_date</code> on the upcoming invoice resource.
+     * calculated exactly the same as the previewed proration, you should pass the
+     * <code>subscription_proration_date</code> parameter when doing the actual
+     * subscription update. The recommended way to get only the prorations being
+     * previewed is to consider only proration line items where
+     * <code>period[start]</code> is equal to the
+     * <code>subscription_proration_date</code> value passed in the request.
      *
      * @param null|array $params
-     * @param null|array|\Stripe\Util\RequestOptions $opts
+     * @param null|RequestOptionsArray|\Stripe\Util\RequestOptions $opts
      *
      * @throws \Stripe\Exception\ApiErrorException if the request fails
      *
@@ -237,11 +274,11 @@ class InvoiceService extends \Stripe\Service\AbstractService
      * line items.
      *
      * @param null|array $params
-     * @param null|array|\Stripe\Util\RequestOptions $opts
+     * @param null|RequestOptionsArray|\Stripe\Util\RequestOptions $opts
      *
      * @throws \Stripe\Exception\ApiErrorException if the request fails
      *
-     * @return \Stripe\Collection<\Stripe\Invoice>
+     * @return \Stripe\Collection<\Stripe\InvoiceLineItem>
      */
     public function upcomingLines($params = null, $opts = null)
     {
@@ -260,7 +297,7 @@ class InvoiceService extends \Stripe\Service\AbstractService
      *
      * @param string $id
      * @param null|array $params
-     * @param null|array|\Stripe\Util\RequestOptions $opts
+     * @param null|RequestOptionsArray|\Stripe\Util\RequestOptions $opts
      *
      * @throws \Stripe\Exception\ApiErrorException if the request fails
      *
@@ -272,14 +309,42 @@ class InvoiceService extends \Stripe\Service\AbstractService
     }
 
     /**
+     * Updates an invoice’s line item. Some fields, such as <code>tax_amounts</code>,
+     * only live on the invoice line item, so they can only be updated through this
+     * endpoint. Other fields, such as <code>amount</code>, live on both the invoice
+     * item and the invoice line item, so updates on this endpoint will propagate to
+     * the invoice item as well. Updating an invoice’s line item is only possible
+     * before the invoice is finalized.
+     *
+     * @param string $parentId
+     * @param string $id
+     * @param null|array $params
+     * @param null|RequestOptionsArray|\Stripe\Util\RequestOptions $opts
+     *
+     * @throws \Stripe\Exception\ApiErrorException if the request fails
+     *
+     * @return \Stripe\InvoiceLineItem
+     */
+    public function updateLine($parentId, $id, $params = null, $opts = null)
+    {
+        return $this->request('post', $this->buildPath('/v1/invoices/%s/lines/%s', $parentId, $id), $params, $opts);
+    }
+
+    /**
      * Mark a finalized invoice as void. This cannot be undone. Voiding an invoice is
      * similar to <a href="#delete_invoice">deletion</a>, however it only applies to
      * finalized invoices and maintains a papertrail where the invoice can still be
      * found.
      *
+     * Consult with local regulations to determine whether and how an invoice might be
+     * amended, canceled, or voided in the jurisdiction you’re doing business in. You
+     * might need to <a href="#create_invoice">issue another invoice</a> or <a
+     * href="#create_credit_note">credit note</a> instead. Stripe recommends that you
+     * consult with your legal counsel for advice specific to your business.
+     *
      * @param string $id
      * @param null|array $params
-     * @param null|array|\Stripe\Util\RequestOptions $opts
+     * @param null|RequestOptionsArray|\Stripe\Util\RequestOptions $opts
      *
      * @throws \Stripe\Exception\ApiErrorException if the request fails
      *

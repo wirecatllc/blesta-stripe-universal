@@ -5,7 +5,7 @@
     "type": "blesta-gateway-nonmerchant",
     "require": {
         "blesta/composer-installer": "~1.0",
-        "stripe/stripe-php": "~7.0"
+        "stripe/stripe-php": "~14.0"
     },
     "config": {
         "allow-plugins": {
