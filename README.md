@@ -17,7 +17,6 @@ Checkout page support all payment methods (From Alipay, WeChat, Google Pay, Appl
 - Support webhook events but it does not handle async payment(ACH, etc.) for now. Webhook at this stage helps to capture payments that client failed to redirect back to website 
 - Refund, Void transaction
 - Disable payment type in settings
-- Better Redirect Pictures :)
 
 ## Install the Gateway
 
@@ -34,6 +33,20 @@ For example:
 3. Find the Stripe Universal gateway
 4. Click the "Install" button
 5. Profit!
+
+## Customize the plugin
+
+Here are some tips if you want to customize/setup this plugin
+
+### Configuring Redirect Image
+
+Credits: [@xboxfly15](https://github.com/xboxfly15)
+
+We have two versions available: one with Alipay, and one without it.
+
+If you would like to use the one without Alipay, rename the `views/default/images/button-no_alipay.png` to `button.png`. Possibly this would be an option in the setting in the future.
+
+Raw SVG file availble in `views/default/images/svg`
 
 ### Compatibility
 
