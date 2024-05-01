@@ -230,7 +230,7 @@ class StripeUniversal extends NonmerchantGateway
         );
 
         if (isset($session->currency_conversion)) {
-            $currency = $session->currency_conversion->source_currency;
+            $currency = strtoupper($session->currency_conversion->source_currency);
             $amount = $this->formatAmount(
                 $session->currency_conversion->amount_total,
                 $currency,
