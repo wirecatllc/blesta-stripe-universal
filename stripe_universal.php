@@ -243,7 +243,7 @@ class StripeUniversal extends NonmerchantGateway
             'amount' => $amount,
             'currency' => $currency,
             'status' => $status,
-            'reference_id' => (isset($session->customer_email) ? $session->customer_email : $session->id),
+            'reference_id' => $session->id,
             'transaction_id' => $session->payment_intent,
             'invoices' => $metadata['invoices'],
         ];
