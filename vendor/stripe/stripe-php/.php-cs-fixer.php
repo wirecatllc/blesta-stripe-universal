@@ -1,6 +1,7 @@
 <?php
 
 $finder = PhpCsFixer\Finder::create()
+    ->in(__DIR__)
     ->notPath('tests/TestCase.php');
 
 $config = new PhpCsFixer\Config();
@@ -48,8 +49,13 @@ $config->setRules([
     // needs to be a raw `StripeObject`.
     'self_accessor' => false,
 
-    // Visibility annotations are not supported by php5.6
-    'visibility_required' => false,
+    // Visibility for constants requires PHP 7.1, but we support PHP 5.6
+    'visibility_required' => [
+        'elements' => [
+            'method',
+            'property',
+        ],
+    ],
 
     // Apparently "uninitialized" is distinct from "null" in some versions of PHP
     // so I am defensively disabling this rule so as to not cause breaking changes

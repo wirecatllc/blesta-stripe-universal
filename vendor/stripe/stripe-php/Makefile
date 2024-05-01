@@ -11,12 +11,16 @@ test: vendor
 	vendor/bin/phpunit
 .PHONY: test
 
+ci-test: vendor
+	./build.php $$AUTOLOAD
+.PHONY: ci-test
+
 fmt: vendor
-	vendor/bin/php-cs-fixer fix -v --using-cache=no .
+	PHP_CS_FIXER_IGNORE_ENV=true vendor/bin/php-cs-fixer fix -v --using-cache=no
 .PHONY: fmt
 
 fmtcheck: vendor
-	vendor/bin/php-cs-fixer fix -v --dry-run --using-cache=no .
+	PHP_CS_FIXER_IGNORE_ENV=true vendor/bin/php-cs-fixer fix -v --dry-run --using-cache=no
 .PHONY: fmtcheck
 
 phpdoc: vendor/bin/phpdoc
@@ -32,7 +36,7 @@ phpstan-baseline: vendor/bin/phpstan
 
 update-version:
 	@echo "$(VERSION)" > VERSION
-	@perl -pi -e 's|VERSION = '\''[.\d]+'\''|VERSION = '\''$(VERSION)'\''|' lib/Stripe.php
+	@perl -pi -e 's|VERSION = '\''[.\-\w\d]+'\''|VERSION = '\''$(VERSION)'\''|' lib/Stripe.php
 .PHONY: update-version
 
 codegen-format: fmt
