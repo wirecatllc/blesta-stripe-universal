@@ -12,6 +12,10 @@ jobs:
     strategy:
       matrix:
         php-version: ['7.4', '8.0', '8.1', '8.2', '8.3']
+        dependency-versions: ['highest']
+        include:
+          - php-version: '8.3'
+            dependency-versions: 'lowest'
 
     steps:
       - uses: actions/checkout@v4
@@ -23,17 +27,19 @@ jobs:
           coverage: xdebug
 
       - name: Install dependencies
-        run: composer install --prefer-dist --no-progress
+        uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: ${{ matrix.dependency-versions }}
 
       - name: Run tests
         run: vendor/bin/phpunit --verbose
 
       - name: Generate coverage report
-        if: matrix.php-version == '8.1'
+        if: matrix.php-version == '8.2' && matrix.dependency-versions == 'highest'
         run: vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
 
       - name: Upload coverage artifact
-        if: matrix.php-version == '8.1'
+        if: matrix.php-version == '8.2' && matrix.dependency-versions == 'highest'
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
@@ -48,10 +54,10 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
+          php-version: '8.3'
 
       - name: Install dependencies
-        run: composer install --prefer-dist --no-progress
+        uses: ramsey/composer-install@v3
 
       - name: Run PHPStan
         run: vendor/bin/phpstan analyse --no-progress
