@@ -42,7 +42,7 @@ class GetLineItemsTest extends TestCase
 
     public function testMultipleInvoices()
     {
-        $mockInvoices = new class {
+        $mockInvoices = new class () {
             public function get($id)
             {
                 $map = [
@@ -72,7 +72,7 @@ class GetLineItemsTest extends TestCase
 
     public function testInvalidInvoiceId()
     {
-        $mockInvoices = new class {
+        $mockInvoices = new class () {
             public function get($id)
             {
                 if ($id === 1) {

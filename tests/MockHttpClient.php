@@ -1,4 +1,5 @@
 <?php
+
 class MockHttpClient implements \Stripe\HttpClient\ClientInterface
 {
     private static $responseQueue = [];

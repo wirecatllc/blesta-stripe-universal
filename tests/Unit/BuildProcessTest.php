@@ -21,7 +21,7 @@ class BuildProcessTest extends TestCase
         $this->gateway->setCurrency('USD');
 
         // Mock Contacts model
-        $this->gateway->Contacts = new class {
+        $this->gateway->Contacts = new class () {
             public function get($id)
             {
                 return (object) ['email' => 'test@example.com'];
@@ -29,7 +29,7 @@ class BuildProcessTest extends TestCase
         };
 
         // Mock Invoices model (needed by getLineItems when invoice_amounts is provided)
-        $this->gateway->Invoices = new class {
+        $this->gateway->Invoices = new class () {
             public function get($id)
             {
                 return (object) ['id_code' => 'INV-' . str_pad($id, 3, '0', STR_PAD_LEFT)];

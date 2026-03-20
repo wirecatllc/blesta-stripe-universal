@@ -1,4 +1,5 @@
 <?php
+
 // Errors
 $lang['StripeUniversal.!error.auth'] = 'The gateway could not authenticate.';
 $lang['StripeUniversal.!error.secret_key.empty'] = 'Please enter a Secret Key.';
