@@ -353,6 +353,50 @@ class StripeUniversal extends NonmerchantGateway
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function refund($reference_id, $transaction_id, $amount, $notes = null)
+    {
+        $this->loadApi();
+
+        try {
+            // Retrieve PaymentIntent to get currency for amount conversion
+            $pi = \Stripe\PaymentIntent::retrieve($transaction_id);
+            $currency = strtoupper($pi->currency);
+            $amount_cents = $this->formatAmount($amount, $currency, 'to');
+
+            $this->log(
+                $this->base_url . 'refunds',
+                serialize(['payment_intent' => $transaction_id, 'amount' => $amount_cents]),
+                'input',
+                true
+            );
+
+            $refund = \Stripe\Refund::create([
+                'payment_intent' => $transaction_id,
+                'amount' => $amount_cents,
+            ]);
+
+            $this->log(
+                $this->base_url . 'refunds',
+                serialize($refund->toArray()),
+                'output',
+                true
+            );
+        } catch (\Stripe\Exception\ApiErrorException $e) {
+            $this->log($this->base_url . 'refunds', $e->getMessage(), 'output', false);
+            $this->Input->setErrors(['api' => ['internal' => $e->getMessage()]]);
+            return;
+        }
+
+        return [
+            'status' => 'refunded',
+            'reference_id' => $reference_id,
+            'transaction_id' => $transaction_id,
+        ];
+    }
+
+    /**
      * Retrieves the description for CC charges
      *
      * @param float total amount
