@@ -1,0 +1,31 @@
+parameters:
+    level: 5
+    paths:
+        - stripe_universal.php
+    bootstrapFiles:
+        - tests/bootstrap.php
+    ignoreErrors:
+        # Blesta framework stubs may not perfectly match
+        - '#Call to an undefined method#'
+        # Dynamic property assignments from Loader stubs
+        - '#Access to an undefined property#'
+        # Defensive null check on typed parameter (runtime safety)
+        -
+            message: '#Strict comparison using === between Stripe\\StripeObject and null will always evaluate to false#'
+            path: stripe_universal.php
+        # formatAmount returns float for 'from' direction, int for 'to' direction
+        -
+            message: '#Method StripeUniversal::formatAmount\(\) should return int but returns float#'
+            path: stripe_universal.php
+        # PHPDoc @param tag has non-standard format
+        -
+            message: '#PHPDoc tag @param has invalid value#'
+            path: stripe_universal.php
+        # $payload may be string|false from file_get_contents, handled at runtime
+        -
+            message: '#Parameter \#1 \$values of static method Stripe\\StripeObject::constructFrom\(\) expects array, string\|false given#'
+            path: stripe_universal.php
+        # Unreachable break after return in switch case
+        -
+            message: '#Unreachable statement - code above always terminates#'
+            path: stripe_universal.php

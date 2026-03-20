@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Stripe Universal processing gateway. Redirect user to Stripe pre-build page
  *
@@ -134,12 +135,12 @@ class StripeUniversal extends NonmerchantGateway
                 'customer_email' => $contact->email,
                 'line_items' => $this->getLineItems($amount, $invoice_amounts),
                 'mode' => 'payment',
-                'success_url' => $options['return_url'] . "&session_id={CHECKOUT_SESSION_ID}",
-                'cancel_url' => $options['return_url'] . "&canceled=true",
-                'metadata' => array(
+                'success_url' => $options['return_url'] . '&session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url' => $options['return_url'] . '&canceled=true',
+                'metadata' => [
                     'client_id' => $contact_info['client_id'],
                     'invoices' => base64_encode(serialize($invoice_amounts)),
-                )
+                ]
             ];
             $session = \Stripe\Checkout\Session::create($sessionObj);
         } catch (Exception $e) {
@@ -168,15 +169,15 @@ class StripeUniversal extends NonmerchantGateway
             return $this->handleCheckoutSession($session);
         }
 
-        if ($get['canceled'] === "true") {
+        if ($get['canceled'] === 'true') {
             $this->Input->setErrors([
-                "exceptions" => [
+                'exceptions' => [
                     'message' => Language::_('StripeUniversal.!error.payment_canceled', true),
                 ]
             ]);
         } else {
             $this->Input->setErrors([
-                "session_id" => [
+                'session_id' => [
                     'message' => Language::_('StripeUniversal.!error.session_id.missing', true),
                 ]
             ]);
@@ -186,28 +187,29 @@ class StripeUniversal extends NonmerchantGateway
         return [];
     }
 
-    private function handleCheckoutSession(\Stripe\Checkout\Session $session) {
-        $status = "pending";
-        if ($session->payment_status === "paid") {
-            $status = "approved";
+    private function handleCheckoutSession(\Stripe\Checkout\Session $session)
+    {
+        $status = 'pending';
+        if ($session->payment_status === 'paid') {
+            $status = 'approved';
         } else {
             switch ($session->status) {
-                case "expired":
+                case 'expired':
                     $this->Input->setErrors([
                         'payment_status' => [
                             'message' => Language::_('StripeUniversal.!error.payment_expired', true),
                         ]
                     ]);
-                    $status = "void";
+                    $status = 'void';
                     break;
-                case "complete":
+                case 'complete':
                     $this->Input->setErrors([
                         'payment_status' => [
                             'message' => Language::_('StripeUniversal.!error.payment_in_progress', true),
                         ]
                     ]);
                     break;
-                case "open":
+                case 'open':
                 default:
                     $this->Input->setErrors([
                         'payment_status' => [
@@ -318,7 +320,7 @@ class StripeUniversal extends NonmerchantGateway
                 return round($amount, 2);
             }
         }
-        
+
         return (int)round($amount);
     }
 
@@ -336,7 +338,7 @@ class StripeUniversal extends NonmerchantGateway
         $success = true;
         // Skip test if test key is given
         if (substr($secret_key, 0, 7) == 'sk_test') {
-           return $success;
+            return $success;
         }
 
         try {
@@ -381,10 +383,10 @@ class StripeUniversal extends NonmerchantGateway
         $id_codes = [];
         foreach ($invoice_amounts as $invoice_amount) {
             if (($invoice = $this->Invoices->get($invoice_amount['id']))) {
-                $id_codes[] = array(
-                    "id" => $invoice->id_code,
-                    "amount" => $invoice_amount['amount'],
-                );
+                $id_codes[] = [
+                    'id' => $invoice->id_code,
+                    'amount' => $invoice_amount['amount'],
+                ];
             }
         }
 
@@ -440,17 +442,17 @@ class StripeUniversal extends NonmerchantGateway
             }
         } catch (\Stripe\Exception\SignatureVerificationException $e) {
             $this->log($this->base_url . 'Webhook - invalid_signature', $e->getMessage());
-            $this->Input->setErrors(['event' => ['internal' => "invalid_signature"]]);
-            
+            $this->Input->setErrors(['event' => ['internal' => 'invalid_signature']]);
+
             return [];
         } catch (\UnexpectedValueException $e) {
-            $this->log($this->base_url . 'Webhook - invalid_payload',  $e->getMessage());
-            $this->Input->setErrors(['event' => ['internal' => "invalid_payload"]]);
+            $this->log($this->base_url . 'Webhook - invalid_payload', $e->getMessage());
+            $this->Input->setErrors(['event' => ['internal' => 'invalid_payload']]);
 
             return [];
         } catch (Exception $e) {
-            $this->log($this->base_url . "Webhook - unknown", $e->getMessage());
-            $this->Input->setErrors(['event' => ['internal' => "unknown"]]);
+            $this->log($this->base_url . 'Webhook - unknown', $e->getMessage());
+            $this->Input->setErrors(['event' => ['internal' => 'unknown']]);
 
             return [];
         }
