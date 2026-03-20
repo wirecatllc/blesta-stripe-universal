@@ -127,15 +127,11 @@ class ValidateTest extends TestCase
      * Tests the generic Exception catch block.
      * Triggered by the Event::constructFrom path (no webhook_secret) receiving
      * a raw string instead of an array — a pre-existing bug.
-     * In PHP 8, TypeError extends Error (not Exception), so the gateway's
-     * catch(Exception) block does NOT catch it. This documents the bug.
+     * PHP 7: catch(Exception) catches the error, returns [] with error set.
+     * PHP 8+: TypeError extends Error (not Exception), so it propagates uncaught.
      */
     public function testGenericException()
     {
-        // Set meta WITHOUT webhook_secret to trigger Event::constructFrom path,
-        // which will throw because it receives a string instead of an array
-        // (pre-existing bug). In PHP 8, this is a TypeError which extends Error,
-        // NOT Exception, so the gateway's catch blocks don't catch it.
         $this->gateway->setMeta([
             'secret_key' => 'sk_test_123',
             // no webhook_secret
@@ -143,15 +139,24 @@ class ValidateTest extends TestCase
 
         $this->setPhpInput('{"not": "a valid event"}');
 
-        $this->expectException(\TypeError::class);
-        $this->gateway->validate([], []);
+        if (PHP_MAJOR_VERSION >= 8) {
+            $this->expectException(\TypeError::class);
+            $this->gateway->validate([], []);
+        } else {
+            // PHP 7: caught by catch(Exception), returns [] with error
+            $result = $this->gateway->validate([], []);
+            $this->assertEquals([], $result);
+            $errors = $this->gateway->Input->errors();
+            $this->assertArrayHasKey('event', $errors);
+        }
     }
 
     /**
      * Tests the fallback path when no webhook_secret is configured.
      * Documents pre-existing bug: Event::constructFrom receives a raw string
      * instead of an array, which the real Stripe SDK does not handle correctly.
-     * In PHP 8, TypeError extends Error (not Exception), so it propagates uncaught.
+     * PHP 7: catch(Exception) catches the error, returns [] with error set.
+     * PHP 8+: TypeError extends Error (not Exception), so it propagates uncaught.
      */
     public function testWebhookWithoutSecret()
     {
@@ -163,11 +168,15 @@ class ValidateTest extends TestCase
         $payload = '{"id":"evt_test","type":"checkout.session.completed","data":{"object":{"id":"cs_xxx"}}}';
         $this->setPhpInput($payload);
 
-        // Event::constructFrom receives raw string — pre-existing bug.
-        // The real SDK expects an array. In PHP 8 this throws TypeError
-        // which extends Error, not Exception, so the gateway doesn't catch it.
-        $this->expectException(\TypeError::class);
-        $this->gateway->validate([], []);
+        if (PHP_MAJOR_VERSION >= 8) {
+            $this->expectException(\TypeError::class);
+            $this->gateway->validate([], []);
+        } else {
+            $result = $this->gateway->validate([], []);
+            $this->assertEquals([], $result);
+            $errors = $this->gateway->Input->errors();
+            $this->assertArrayHasKey('event', $errors);
+        }
     }
 
     public function testCheckoutSessionCompletedEvent()
