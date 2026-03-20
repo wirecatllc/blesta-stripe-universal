@@ -397,6 +397,44 @@ class StripeUniversal extends NonmerchantGateway
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function void($reference_id, $transaction_id, $notes = null)
+    {
+        $this->loadApi();
+
+        try {
+            $this->log(
+                $this->base_url . 'refunds - void',
+                serialize(['payment_intent' => $transaction_id]),
+                'input',
+                true
+            );
+
+            $refund = \Stripe\Refund::create([
+                'payment_intent' => $transaction_id,
+            ]);
+
+            $this->log(
+                $this->base_url . 'refunds - void',
+                serialize($refund->toArray()),
+                'output',
+                true
+            );
+        } catch (\Stripe\Exception\ApiErrorException $e) {
+            $this->log($this->base_url . 'refunds - void', $e->getMessage(), 'output', false);
+            $this->Input->setErrors(['api' => ['internal' => $e->getMessage()]]);
+            return;
+        }
+
+        return [
+            'status' => 'void',
+            'reference_id' => $reference_id,
+            'transaction_id' => $transaction_id,
+        ];
+    }
+
+    /**
      * Retrieves the description for CC charges
      *
      * @param float total amount
