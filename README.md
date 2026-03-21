@@ -4,18 +4,17 @@ This is a non-merchant gateway for Blesta that integrates with [Stripe Checkout]
 
 Checkout page support all payment methods (From Alipay, WeChat, Google Pay, Apple Pay to EPS, iDEAL Giropay). 
 
-**This project is not affiliated/related to [Code Cats Ltd](https://code-cats.com/). Any issue of this project should be reported using [Github Issues](https://github.com/wirecatllc/blesta-stripe-universal/issues). There is NO Discord/Telegram Support Group.**
-
 ## What it does
 
-- Generate `Stripe/Checkout/Session` checkout link and verify&record payment if completed. 
+- Generate `Stripe/Checkout/Session` checkout link and verify&record payment if completed
 - Partial webhook support (see below)
 - Separate items for multiple invoices checkout
+- Refund support (full and partial) via Stripe Refund API
+- Void transaction support (processed as full refund)
 
 ### TODO
 
-- Support webhook events but it does not handle async payment(ACH, etc.) for now. Webhook at this stage helps to capture payments that client failed to redirect back to website 
-- Refund, Void transaction
+- Support webhook events but it does not handle async payment(ACH, etc.) for now. Webhook at this stage helps to capture payments that client failed to redirect back to website
 - Disable payment type in settings
 
 ## Install the Gateway
