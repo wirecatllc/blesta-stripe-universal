@@ -228,6 +228,74 @@ class ValidateTest extends TestCase
 
         $this->assertEquals([], $result);
     }
+
+    public function testAsyncPaymentSucceededEvent()
+    {
+        $payload = json_encode([
+            'id' => 'evt_test_async_ok',
+            'object' => 'event',
+            'type' => 'checkout.session.async_payment_succeeded',
+            'data' => [
+                'object' => [
+                    'id' => 'cs_test_async_ok',
+                    'object' => 'checkout.session',
+                    'payment_status' => 'paid',
+                    'status' => 'complete',
+                    'currency' => 'usd',
+                    'amount_total' => 3000,
+                    'payment_intent' => 'pi_test_async_ok',
+                    'metadata' => [
+                        'client_id' => 77,
+                        'invoices' => base64_encode(serialize([['id' => 5, 'amount' => 30.00]])),
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->setPhpInput($payload);
+        $_SERVER['HTTP_STRIPE_SIGNATURE'] = $this->generateSignatureHeader($payload, $this->webhookSecret);
+
+        $result = $this->gateway->validate([], []);
+
+        $this->assertEquals('approved', $result['status']);
+        $this->assertEquals(77, $result['client_id']);
+        $this->assertEquals(30.00, $result['amount']);
+    }
+
+    public function testAsyncPaymentFailedEvent()
+    {
+        $payload = json_encode([
+            'id' => 'evt_test_async_fail',
+            'object' => 'event',
+            'type' => 'checkout.session.async_payment_failed',
+            'data' => [
+                'object' => [
+                    'id' => 'cs_test_async_fail',
+                    'object' => 'checkout.session',
+                    'payment_status' => 'unpaid',
+                    'status' => 'complete',
+                    'currency' => 'usd',
+                    'amount_total' => 5000,
+                    'payment_intent' => 'pi_test_async_fail',
+                    'metadata' => [
+                        'client_id' => 88,
+                        'invoices' => base64_encode(serialize([['id' => 7, 'amount' => 50.00]])),
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->setPhpInput($payload);
+        $_SERVER['HTTP_STRIPE_SIGNATURE'] = $this->generateSignatureHeader($payload, $this->webhookSecret);
+
+        $result = $this->gateway->validate([], []);
+
+        $this->assertEquals('declined', $result['status']);
+        $this->assertEquals(88, $result['client_id']);
+        $this->assertEquals(50.00, $result['amount']);
+        $errors = $this->gateway->Input->errors();
+        $this->assertArrayHasKey('payment_status', $errors);
+    }
 }
 
 /**

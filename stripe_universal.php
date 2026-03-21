@@ -581,9 +581,11 @@ class StripeUniversal extends NonmerchantGateway
 
         switch ($event->type) {
             case 'checkout.session.completed':
+            case 'checkout.session.async_payment_succeeded':
                 return $this->handleCheckoutSession($event->data->object);
-                break;
-        };
+            case 'checkout.session.async_payment_failed':
+                return $this->handleAsyncPaymentFailed($event->data->object);
+        }
 
         return [];
     }
