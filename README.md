@@ -7,14 +7,13 @@ Checkout page support all payment methods (From Alipay, WeChat, Google Pay, Appl
 ## What it does
 
 - Generate `Stripe/Checkout/Session` checkout link and verify&record payment if completed
-- Partial webhook support (see below)
+- Webhook support for checkout completion and async payment methods (ACH, SEPA, etc.)
 - Separate items for multiple invoices checkout
 - Refund support (full and partial) via Stripe Refund API
 - Void transaction support (processed as full refund)
 
 ### TODO
 
-- Support webhook events but it does not handle async payment(ACH, etc.) for now. Webhook at this stage helps to capture payments that client failed to redirect back to website
 - Disable payment type in settings
 
 ## Install the Gateway

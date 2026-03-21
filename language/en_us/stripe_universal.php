@@ -17,6 +17,7 @@ $lang['StripeUniversal.!error.session_id.missing'] = 'Return URL missing session
 $lang['StripeUniversal.!error.payment_expired'] = 'Payment gateway returns that the current transaction has expired. Please re-checkout';
 $lang['StripeUniversal.!error.metadata.missing'] = 'Response is missing metadata, please open a support ticket for this transaction.';
 $lang['StripeUniversal.!error.metadata.missing_client_id'] = 'Payment gateway returns invalid metadata, please open a support ticket for this transaction.';
+$lang['StripeUniversal.!error.payment_async_failed'] = 'The delayed payment method was declined by the bank.';
 
 $lang['StripeUniversal.name'] = 'Stripe Universal';
 $lang['StripeUniversal.description'] = 'Uses Stripe Checkout to process payments.';
@@ -30,7 +31,7 @@ $lang['StripeUniversal.webhook_secret'] = 'Webhook Secret';
 $lang['StripeUniversal.tooltip_webhook_secret'] = 'When set, Gateway will try to verify the webhook request using the given secret.';
 
 $lang['StripeUniversal.webhook'] = 'Stripe Webhook';
-$lang['StripeUniversal.webhook_note'] = 'It is recommended to configure the following url as a Webhook for "checkout.session.completed" events in your Stripe account.';
+$lang['StripeUniversal.webhook_note'] = 'It is recommended to configure the following url as a Webhook for "checkout.session.completed", "checkout.session.async_payment_succeeded", and "checkout.session.async_payment_failed" events in your Stripe account.';
 
 // Charge description
 $lang['StripeUniversal.charge_description_default'] = 'Charge for specified amount';

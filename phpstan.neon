@@ -25,7 +25,3 @@ parameters:
         -
             message: '#Parameter \#1 \$values of static method Stripe\\StripeObject::constructFrom\(\) expects array, string\|false given#'
             path: stripe_universal.php
-        # Unreachable break after return in switch case
-        -
-            message: '#Unreachable statement - code above always terminates#'
-            path: stripe_universal.php

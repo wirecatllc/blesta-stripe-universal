@@ -253,6 +253,46 @@ class StripeUniversal extends NonmerchantGateway
         ];
     }
 
+    private function handleAsyncPaymentFailed(\Stripe\Checkout\Session $session)
+    {
+        $metadata = $this->extractMetadata($session->metadata);
+        if ($metadata === false) {
+            return [];
+        }
+
+        $this->Input->setErrors([
+            'payment_status' => [
+                'message' => Language::_('StripeUniversal.!error.payment_async_failed', true),
+            ]
+        ]);
+
+        if (isset($session->currency_conversion)) {
+            $currency = strtoupper($session->currency_conversion->source_currency);
+            $amount = $this->formatAmount(
+                $session->currency_conversion->amount_total,
+                $currency,
+                'from'
+            );
+        } else {
+            $currency = strtoupper($session->currency);
+            $amount = $this->formatAmount(
+                $session->amount_total,
+                $currency,
+                'from'
+            );
+        }
+
+        return [
+            'client_id' => $metadata['client_id'],
+            'amount' => $amount,
+            'currency' => $currency,
+            'status' => 'declined',
+            'reference_id' => $session->id,
+            'transaction_id' => $session->payment_intent,
+            'invoices' => $metadata['invoices'],
+        ];
+    }
+
     private function extractMetadata(\Stripe\StripeObject $metadata)
     {
         if ($metadata === null) {
@@ -541,9 +581,11 @@ class StripeUniversal extends NonmerchantGateway
 
         switch ($event->type) {
             case 'checkout.session.completed':
+            case 'checkout.session.async_payment_succeeded':
                 return $this->handleCheckoutSession($event->data->object);
-                break;
-        };
+            case 'checkout.session.async_payment_failed':
+                return $this->handleAsyncPaymentFailed($event->data->object);
+        }
 
         return [];
     }
