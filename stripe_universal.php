@@ -74,6 +74,13 @@ class StripeUniversal extends NonmerchantGateway
                     'rule' => [[$this, 'validateConnection']],
                     'message' => Language::_('StripeUniversal.!error.secret_key.valid', true)
                 ]
+            ],
+            'webhook_secret' => [
+                'empty' => [
+                    'rule' => 'isEmpty',
+                    'negate' => true,
+                    'message' => Language::_('StripeUniversal.!error.webhook_secret.empty', true)
+                ]
             ]
         ];
 
@@ -90,7 +97,7 @@ class StripeUniversal extends NonmerchantGateway
      */
     public function encryptableFields()
     {
-        return ['secret_key'];
+        return ['secret_key', 'webhook_secret'];
     }
 
     /**
@@ -189,7 +196,7 @@ class StripeUniversal extends NonmerchantGateway
         return [];
     }
 
-    private function handleCheckoutSession(\Stripe\StripeObject $session)
+    private function handleCheckoutSession(\Stripe\Checkout\Session $session)
     {
         $status = 'pending';
         if ($session->payment_status === 'paid') {
@@ -255,7 +262,7 @@ class StripeUniversal extends NonmerchantGateway
         ];
     }
 
-    private function handleAsyncPaymentFailed(\Stripe\StripeObject $session)
+    private function handleAsyncPaymentFailed(\Stripe\Checkout\Session $session)
     {
         $metadata = $this->extractMetadata($session->metadata);
         if ($metadata === false) {
@@ -367,6 +374,19 @@ class StripeUniversal extends NonmerchantGateway
         return (int)round($amount);
     }
 
+    private function mapRefundStatus($stripeStatus, $completedStatus)
+    {
+        if ($stripeStatus === 'succeeded') {
+            return $completedStatus;
+        }
+
+        if (in_array($stripeStatus, ['pending', 'requires_action'], true)) {
+            return 'pending';
+        }
+
+        return 'declined';
+    }
+
 
     /**
      * Checks whether a key can be used to connect to the Stripe API
@@ -433,7 +453,7 @@ class StripeUniversal extends NonmerchantGateway
         }
 
         return [
-            'status' => 'refunded',
+            'status' => $this->mapRefundStatus($refund->status, 'refunded'),
             'reference_id' => $reference_id,
             'transaction_id' => $transaction_id,
         ];
@@ -471,7 +491,7 @@ class StripeUniversal extends NonmerchantGateway
         }
 
         return [
-            'status' => 'void',
+            'status' => $this->mapRefundStatus($refund->status, 'void'),
             'reference_id' => $reference_id,
             'transaction_id' => $transaction_id,
         ];
@@ -554,17 +574,27 @@ class StripeUniversal extends NonmerchantGateway
         $payload = @file_get_contents('php://input');
         $sig_header = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? null;
 
+        $webhook_secret = $this->meta['webhook_secret'] ?? null;
+        if (!$webhook_secret) {
+            $this->log($this->base_url . 'Webhook - missing_secret', 'Webhook secret is not configured');
+            $this->Input->setErrors(['event' => ['internal' => 'missing_secret']]);
+
+            return [];
+        }
+
+        if (!is_string($sig_header) || trim($sig_header) === '') {
+            $this->log($this->base_url . 'Webhook - invalid_signature', 'Stripe-Signature header is missing');
+            $this->Input->setErrors(['event' => ['internal' => 'invalid_signature']]);
+
+            return [];
+        }
+
         try {
-            $webhook_secret = $this->meta['webhook_secret'] ?? null;
-            if ($webhook_secret) {
-                $event = Stripe\Webhook::constructEvent(
-                    $payload,
-                    $sig_header,
-                    $webhook_secret
-                );
-            } else {
-                $event = \Stripe\Event::constructFrom($payload);
-            }
+            $event = Stripe\Webhook::constructEvent(
+                $payload,
+                $sig_header,
+                $webhook_secret
+            );
         } catch (\Stripe\Exception\SignatureVerificationException $e) {
             $this->log($this->base_url . 'Webhook - invalid_signature', $e->getMessage());
             $this->Input->setErrors(['event' => ['internal' => 'invalid_signature']]);
@@ -575,19 +605,32 @@ class StripeUniversal extends NonmerchantGateway
             $this->Input->setErrors(['event' => ['internal' => 'invalid_payload']]);
 
             return [];
-        } catch (Exception $e) {
-            $this->log($this->base_url . 'Webhook - unknown', $e->getMessage());
-            $this->Input->setErrors(['event' => ['internal' => 'unknown']]);
-
-            return [];
         }
 
-        switch ($event->type) {
-            case 'checkout.session.completed':
-            case 'checkout.session.async_payment_succeeded':
-                return $this->handleCheckoutSession($event->data->object);
-            case 'checkout.session.async_payment_failed':
-                return $this->handleAsyncPaymentFailed($event->data->object);
+        $sessionEventTypes = [
+            'checkout.session.completed',
+            'checkout.session.async_payment_succeeded',
+            'checkout.session.async_payment_failed',
+        ];
+        if (in_array($event->type, $sessionEventTypes, true)) {
+            $session = $event->data->object ?? null;
+            if (!($session instanceof \Stripe\Checkout\Session)) {
+                $this->log(
+                    $this->base_url . 'Webhook - invalid_object',
+                    serialize(['event_id' => $event->id, 'event_type' => $event->type])
+                );
+                $this->Input->setErrors(['event' => ['internal' => 'invalid_object']]);
+
+                return [];
+            }
+
+            switch ($event->type) {
+                case 'checkout.session.completed':
+                case 'checkout.session.async_payment_succeeded':
+                    return $this->handleCheckoutSession($session);
+                case 'checkout.session.async_payment_failed':
+                    return $this->handleAsyncPaymentFailed($session);
+            }
         }
 
         return [];

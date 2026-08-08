@@ -156,4 +156,23 @@ class RefundTest extends TestCase
         $refundRequest = $requests[1];
         $this->assertEquals(1000, $refundRequest['params']['amount']);
     }
+
+    public function testPendingRefundRemainsPending()
+    {
+        MockHttpClient::enqueueResponse(json_encode([
+            'id' => 'pi_test_pending',
+            'object' => 'payment_intent',
+            'currency' => 'usd',
+        ]));
+        MockHttpClient::enqueueResponse(json_encode([
+            'id' => 're_test_pending',
+            'object' => 'refund',
+            'payment_intent' => 'pi_test_pending',
+            'status' => 'pending',
+        ]));
+
+        $result = $this->gateway->refund('cs_test_ref', 'pi_test_pending', 10.50);
+
+        $this->assertSame('pending', $result['status']);
+    }
 }

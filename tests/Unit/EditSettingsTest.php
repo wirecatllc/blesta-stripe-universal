@@ -18,7 +18,7 @@ class EditSettingsTest extends TestCase
 
     public function testSetsValidationRules()
     {
-        $meta = ['secret_key' => 'sk_test_abc'];
+        $meta = ['secret_key' => 'sk_test_abc', 'webhook_secret' => 'whsec_123'];
         $this->gateway->editSettings($meta);
 
         $rules = $this->gateway->Input->getRules();
@@ -26,6 +26,8 @@ class EditSettingsTest extends TestCase
         $this->assertArrayHasKey('secret_key', $rules);
         $this->assertArrayHasKey('empty', $rules['secret_key']);
         $this->assertArrayHasKey('valid', $rules['secret_key']);
+        $this->assertArrayHasKey('webhook_secret', $rules);
+        $this->assertArrayHasKey('empty', $rules['webhook_secret']);
 
         // Verify the 'empty' rule structure
         $this->assertEquals('isEmpty', $rules['secret_key']['empty']['rule']);
@@ -33,6 +35,8 @@ class EditSettingsTest extends TestCase
 
         // Verify the 'valid' rule references validateConnection
         $this->assertIsArray($rules['secret_key']['valid']['rule']);
+        $this->assertEquals('isEmpty', $rules['webhook_secret']['empty']['rule']);
+        $this->assertTrue($rules['webhook_secret']['empty']['negate']);
     }
 
     public function testReturnsMeta()

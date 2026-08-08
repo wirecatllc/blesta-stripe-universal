@@ -15,7 +15,7 @@ class TrivialMethodsTest extends TestCase
 
     public function testEncryptableFields()
     {
-        $this->assertEquals(['secret_key'], $this->gateway->encryptableFields());
+        $this->assertEquals(['secret_key', 'webhook_secret'], $this->gateway->encryptableFields());
     }
 
     public function testRequiresCustomerPresent()

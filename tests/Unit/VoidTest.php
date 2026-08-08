@@ -71,4 +71,19 @@ class VoidTest extends TestCase
         $this->assertEquals('output', $errorLog['direction']);
         $this->assertFalse($errorLog['success']);
     }
+
+    public function testFailedVoidIsDeclined()
+    {
+        MockHttpClient::enqueueResponse(json_encode([
+            'id' => 're_test_failed_void',
+            'object' => 'refund',
+            'payment_intent' => 'pi_test_failed_void',
+            'status' => 'failed',
+            'failure_reason' => 'declined',
+        ]));
+
+        $result = $this->gateway->void('cs_test_ref', 'pi_test_failed_void');
+
+        $this->assertSame('declined', $result['status']);
+    }
 }
