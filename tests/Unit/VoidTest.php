@@ -49,6 +49,38 @@ class VoidTest extends TestCase
         $this->assertArrayNotHasKey('amount', $requests[0]['params']);
     }
 
+    public function testVoidConfiguresRequestScopedIdempotencyAndRetries()
+    {
+        MockHttpClient::enqueueResponse(json_encode([
+            'id' => 're_test_void_retry',
+            'object' => 'refund',
+            'payment_intent' => 'pi_test_void_retry',
+            'status' => 'succeeded',
+        ]));
+
+        $this->gateway->void('cs_test_ref', 'pi_test_void_retry');
+
+        $voidRequest = MockHttpClient::getAllRequests()[0];
+        $this->assertSame(2, $voidRequest['configuredMaxNetworkRetries']);
+        $idempotencyKey = $this->getIdempotencyKey($voidRequest['headers']);
+        $this->assertMatchesRegularExpression(
+            '/^blesta-refund-[a-f0-9]{32}$/',
+            $idempotencyKey
+        );
+        $this->assertSame(0, \Stripe\Stripe::getMaxNetworkRetries());
+    }
+
+    private function getIdempotencyKey(array $headers)
+    {
+        foreach ($headers as $header) {
+            if (strpos($header, 'Idempotency-Key: ') === 0) {
+                return substr($header, strlen('Idempotency-Key: '));
+            }
+        }
+
+        $this->fail('Stripe request did not include an idempotency key.');
+    }
+
     public function testVoidApiError()
     {
         MockHttpClient::enqueueResponse(json_encode([
@@ -64,6 +96,7 @@ class VoidTest extends TestCase
 
         $errors = $this->gateway->Input->errors();
         $this->assertArrayHasKey('api', $errors);
+        $this->assertSame(0, \Stripe\Stripe::getMaxNetworkRetries());
 
         // Verify error was logged with success=false
         $logs = $this->gateway->getLogEntries();

@@ -12,6 +12,18 @@ Checkout page support all payment methods (From Alipay, WeChat, Google Pay, Appl
 - Refund support (full and partial) via Stripe Refund API
 - Void transaction support (processed as full refund)
 
+### Refund retries
+
+Each refund and void invocation supplies one Stripe idempotency key and ensures
+Stripe PHP is configured for at least two retries on transient network failures.
+The key is unique to that invocation, which prevents duplicate refunds during it
+while allowing legitimate equal-value partial refunds later.
+
+Blesta's gateway callback does not provide a persistent refund-attempt ID, so
+an administrator retrying a request after the original invocation has ended is
+not deduplicated by this gateway. Resolve an ambiguous result in Stripe before
+retrying it manually.
+
 ### TODO
 
 - Disable payment type in settings
