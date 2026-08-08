@@ -23,7 +23,7 @@ class Stripe
     public static $apiUploadBase = 'https://files.stripe.com';
 
     /** @var string The version of the Stripe API to use for requests. */
-    public static $apiVersion = \Stripe\Util\ApiVersion::CURRENT;
+    public static $apiVersion = Util\ApiVersion::CURRENT;
 
     /** @var null|string The account ID for connected accounts requests. */
     public static $accountId = null;
@@ -43,22 +43,25 @@ class Stripe
      */
     public static $logger = null;
 
+    // this is set higher (to `2`) in all other SDKs, but PHP gets a special exception
+    // because PHP scripts are run as short one-offs rather than long-lived servers.
+    // We didn't want to risk messing up integrations by setting a higher default
+    // since that would have worse side effects than other more long-running languages.
     /** @var int Maximum number of request retries */
     public static $maxNetworkRetries = 0;
 
     /** @var bool Whether client telemetry is enabled. Defaults to true. */
     public static $enableTelemetry = true;
 
+    // this is 5s in other languages
+    // see note on `maxNetworkRetries` for more info
     /** @var float Maximum delay between retries, in seconds */
     private static $maxNetworkRetryDelay = 2.0;
-
-    /** @var float Maximum delay between retries, in seconds, that will be respected from the Stripe API */
-    private static $maxRetryAfter = 60.0;
 
     /** @var float Initial delay between retries, in seconds */
     private static $initialNetworkRetryDelay = 0.5;
 
-    const VERSION = '14.3.0';
+    const VERSION = '21.1.1';
 
     /**
      * @return string the API key used for requests
@@ -224,7 +227,9 @@ class Stripe
     }
 
     /**
-     * @param int $maxNetworkRetries Maximum number of request retries
+     * > NOTE: this value is only read during client creation, so creating a client and _then_ calling this method won't affect your client's behavior.
+     *
+     * @param int $maxNetworkRetries maximum number of request retries
      */
     public static function setMaxNetworkRetries($maxNetworkRetries)
     {
@@ -237,14 +242,6 @@ class Stripe
     public static function getMaxNetworkRetryDelay()
     {
         return self::$maxNetworkRetryDelay;
-    }
-
-    /**
-     * @return float Maximum delay between retries, in seconds, that will be respected from the Stripe API
-     */
-    public static function getMaxRetryAfter()
-    {
-        return self::$maxRetryAfter;
     }
 
     /**

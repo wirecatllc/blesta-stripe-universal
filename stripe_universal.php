@@ -7,6 +7,8 @@
  */
 class StripeUniversal extends NonmerchantGateway
 {
+    private const STRIPE_API_VERSION = '2024-04-10';
+
     /**
      * @var array An array of meta data for this gateway
      */
@@ -187,7 +189,7 @@ class StripeUniversal extends NonmerchantGateway
         return [];
     }
 
-    private function handleCheckoutSession(\Stripe\Checkout\Session $session)
+    private function handleCheckoutSession(\Stripe\StripeObject $session)
     {
         $status = 'pending';
         if ($session->payment_status === 'paid') {
@@ -253,7 +255,7 @@ class StripeUniversal extends NonmerchantGateway
         ];
     }
 
-    private function handleAsyncPaymentFailed(\Stripe\Checkout\Session $session)
+    private function handleAsyncPaymentFailed(\Stripe\StripeObject $session)
     {
         $metadata = $this->extractMetadata($session->metadata);
         if ($metadata === false) {
@@ -333,6 +335,7 @@ class StripeUniversal extends NonmerchantGateway
             Loader::load(dirname(__FILE__) . DS . 'vendor' . DS . 'stripe' . DS . 'stripe-php' . DS . 'init.php');
         }
         Stripe\Stripe::setApiKey((isset($this->meta['secret_key']) ? $this->meta['secret_key'] : null));
+        Stripe\Stripe::setApiVersion(self::STRIPE_API_VERSION);
 
         // Include identifying information about this being a gateway for Blesta
         Stripe\Stripe::setAppInfo('Blesta ' . $this->getName(), $this->getVersion(), 'https://blesta.com');
@@ -342,10 +345,10 @@ class StripeUniversal extends NonmerchantGateway
     /**
      * Convert amount from decimal value to integer representation of cents
      *
-     * @param float $amount
+     * @param int|float|string $amount
      * @param string $currency
      * @param string $direction
-     * @return int The amount in cents
+     * @return int|float The converted amount
      */
     private function formatAmount($amount, $currency, $direction = 'to')
     {

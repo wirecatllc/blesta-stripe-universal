@@ -3,11 +3,11 @@
         'name' => 'wirecatllc/stripe_universal',
         'pretty_version' => 'dev-master',
         'version' => 'dev-master',
-        'reference' => '7545d0d1d2a13e392bb48310865faa8d0684b4af',
+        'reference' => '9a26254c2a952ea5950c4b4862ec8d41b6805935',
         'type' => 'blesta-gateway-nonmerchant',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
-        'dev' => true,
+        'dev' => false,
     ),
     'versions' => array(
         'blesta/composer-installer' => array(
@@ -41,9 +41,9 @@
             ),
         ),
         'stripe/stripe-php' => array(
-            'pretty_version' => 'v14.3.0',
-            'version' => '14.3.0.0',
-            'reference' => '4825e7f03f9f83e091928c8f08f96bc87fdd2c7d',
+            'pretty_version' => 'v21.1.1',
+            'version' => '21.1.1.0',
+            'reference' => '5f68d5a285d206a757ebbd9bf0e037759a61c379',
             'type' => 'library',
             'install_path' => __DIR__ . '/../stripe/stripe-php',
             'aliases' => array(),
@@ -52,7 +52,7 @@
         'wirecatllc/stripe_universal' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',
-            'reference' => '7545d0d1d2a13e392bb48310865faa8d0684b4af',
+            'reference' => '9a26254c2a952ea5950c4b4862ec8d41b6805935',
             'type' => 'blesta-gateway-nonmerchant',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

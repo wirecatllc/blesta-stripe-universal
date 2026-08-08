@@ -27,9 +27,24 @@ class MockHttpClient implements \Stripe\HttpClient\ClientInterface
         self::$requestLog = [];
     }
 
-    public function request($method, $absUrl, $headers, $params, $hasFile)
-    {
-        self::$requestLog[] = compact('method', 'absUrl', 'headers', 'params');
+    public function request(
+        $method,
+        $absUrl,
+        $headers,
+        $params,
+        $hasFile,
+        $apiMode = 'v1',
+        $maxNetworkRetries = null
+    ) {
+        self::$requestLog[] = compact(
+            'method',
+            'absUrl',
+            'headers',
+            'params',
+            'hasFile',
+            'apiMode',
+            'maxNetworkRetries'
+        );
 
         if (!empty(self::$responseQueue)) {
             return array_shift(self::$responseQueue);
