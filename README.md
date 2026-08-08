@@ -30,7 +30,14 @@ For example:
 2. Navigate to `Settings > Payment Gateways`
 3. Find the Stripe Universal gateway
 4. Click the "Install" button
-5. Profit!
+5. Configure the Stripe API secret and webhook signing secret
+
+The webhook endpoint must subscribe to `checkout.session.completed`,
+`checkout.session.async_payment_succeeded`, and
+`checkout.session.async_payment_failed` events.
+
+After upgrading an existing installation to 1.1.0, save the gateway settings
+once to encrypt a webhook secret that was stored by an earlier release.
 
 ## Customize the plugin
 

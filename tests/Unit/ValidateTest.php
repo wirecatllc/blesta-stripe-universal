@@ -109,6 +109,18 @@ class ValidateTest extends TestCase
         $this->assertEquals('invalid_signature', $errors['event']['internal']);
     }
 
+    public function testMissingSignatureHeader()
+    {
+        $payload = json_encode(['id' => 'evt_test', 'type' => 'checkout.session.completed']);
+        $this->setPhpInput($payload);
+
+        $result = $this->gateway->validate([], []);
+
+        $this->assertSame([], $result);
+        $errors = $this->gateway->Input->errors();
+        $this->assertSame('invalid_signature', $errors['event']['internal']);
+    }
+
     public function testInvalidPayload()
     {
         $this->setPhpInput('not valid json {{{');
@@ -123,41 +135,6 @@ class ValidateTest extends TestCase
         $this->assertContains($errors['event']['internal'], ['invalid_signature', 'invalid_payload']);
     }
 
-    /**
-     * Tests the generic Exception catch block.
-     * Triggered by the Event::constructFrom path (no webhook_secret) receiving
-     * a raw string instead of an array — a pre-existing bug.
-     * PHP 7: catch(Exception) catches the error, returns [] with error set.
-     * PHP 8+: TypeError extends Error (not Exception), so it propagates uncaught.
-     */
-    public function testGenericException()
-    {
-        $this->gateway->setMeta([
-            'secret_key' => 'sk_test_123',
-            // no webhook_secret
-        ]);
-
-        $this->setPhpInput('{"not": "a valid event"}');
-
-        if (PHP_MAJOR_VERSION >= 8) {
-            $this->expectException(\TypeError::class);
-            $this->gateway->validate([], []);
-        } else {
-            // PHP 7: caught by catch(Exception), returns [] with error
-            $result = $this->gateway->validate([], []);
-            $this->assertEquals([], $result);
-            $errors = $this->gateway->Input->errors();
-            $this->assertArrayHasKey('event', $errors);
-        }
-    }
-
-    /**
-     * Tests the fallback path when no webhook_secret is configured.
-     * Documents pre-existing bug: Event::constructFrom receives a raw string
-     * instead of an array, which the real Stripe SDK does not handle correctly.
-     * PHP 7: catch(Exception) catches the error, returns [] with error set.
-     * PHP 8+: TypeError extends Error (not Exception), so it propagates uncaught.
-     */
     public function testWebhookWithoutSecret()
     {
         $this->gateway->setMeta([
@@ -168,15 +145,11 @@ class ValidateTest extends TestCase
         $payload = '{"id":"evt_test","type":"checkout.session.completed","data":{"object":{"id":"cs_xxx"}}}';
         $this->setPhpInput($payload);
 
-        if (PHP_MAJOR_VERSION >= 8) {
-            $this->expectException(\TypeError::class);
-            $this->gateway->validate([], []);
-        } else {
-            $result = $this->gateway->validate([], []);
-            $this->assertEquals([], $result);
-            $errors = $this->gateway->Input->errors();
-            $this->assertArrayHasKey('event', $errors);
-        }
+        $result = $this->gateway->validate([], []);
+
+        $this->assertSame([], $result);
+        $errors = $this->gateway->Input->errors();
+        $this->assertSame('missing_secret', $errors['event']['internal']);
     }
 
     public function testCheckoutSessionCompletedEvent()
@@ -227,6 +200,58 @@ class ValidateTest extends TestCase
         $result = $this->gateway->validate([], []);
 
         $this->assertEquals([], $result);
+    }
+
+    public function testCheckoutEventRejectsUnexpectedObjectType()
+    {
+        $payload = json_encode([
+            'id' => 'evt_test_wrong_object',
+            'object' => 'event',
+            'type' => 'checkout.session.completed',
+            'data' => [
+                'object' => [
+                    'id' => 'pi_wrong_object',
+                    'object' => 'payment_intent',
+                    'description' => 'sensitive@example.com',
+                ],
+            ],
+        ]);
+
+        $this->setPhpInput($payload);
+        $_SERVER['HTTP_STRIPE_SIGNATURE'] = $this->generateSignatureHeader($payload, $this->webhookSecret);
+
+        $result = $this->gateway->validate([], []);
+
+        $this->assertSame([], $result);
+        $errors = $this->gateway->Input->errors();
+        $this->assertSame('invalid_object', $errors['event']['internal']);
+        $logs = $this->gateway->getLogEntries();
+        $this->assertSame(
+            serialize([
+                'event_id' => 'evt_test_wrong_object',
+                'event_type' => 'checkout.session.completed',
+            ]),
+            end($logs)['data']
+        );
+    }
+
+    public function testCheckoutEventRejectsMissingObject()
+    {
+        $payload = json_encode([
+            'id' => 'evt_test_missing_object',
+            'object' => 'event',
+            'type' => 'checkout.session.completed',
+            'data' => [],
+        ]);
+
+        $this->setPhpInput($payload);
+        $_SERVER['HTTP_STRIPE_SIGNATURE'] = $this->generateSignatureHeader($payload, $this->webhookSecret);
+
+        $result = $this->gateway->validate([], []);
+
+        $this->assertSame([], $result);
+        $errors = $this->gateway->Input->errors();
+        $this->assertSame('invalid_object', $errors['event']['internal']);
     }
 
     public function testAsyncPaymentSucceededEvent()

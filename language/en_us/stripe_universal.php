@@ -4,6 +4,7 @@
 $lang['StripeUniversal.!error.auth'] = 'The gateway could not authenticate.';
 $lang['StripeUniversal.!error.secret_key.empty'] = 'Please enter a Secret Key.';
 $lang['StripeUniversal.!error.secret_key.valid'] = 'Unable to connect to the Stripe API using the given Secret Key.';
+$lang['StripeUniversal.!error.webhook_secret.empty'] = 'Please enter a Webhook Secret.';
 
 $lang['StripeUniversal.!error.invalid_request_error'] = 'The payment gateway returned an error when processing the request.';
 
@@ -28,7 +29,7 @@ $lang['StripeUniversal.test_key_detected'] = 'You are currently using Test Key! 
 $lang['StripeUniversal.tooltip_secret_key'] = 'Your API Secret Key is specific to either live or test mode. Be sure you are using the correct key.';
 
 $lang['StripeUniversal.webhook_secret'] = 'Webhook Secret';
-$lang['StripeUniversal.tooltip_webhook_secret'] = 'When set, Gateway will try to verify the webhook request using the given secret.';
+$lang['StripeUniversal.tooltip_webhook_secret'] = 'Used to verify that webhook requests were sent by Stripe.';
 
 $lang['StripeUniversal.webhook'] = 'Stripe Webhook';
 $lang['StripeUniversal.webhook_note'] = 'It is recommended to configure the following url as a Webhook for "checkout.session.completed", "checkout.session.async_payment_succeeded", and "checkout.session.async_payment_failed" events in your Stripe account.';
