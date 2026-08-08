@@ -137,8 +137,10 @@ class StripeUniversal extends NonmerchantGateway
         Loader::loadModels($this, ['Contacts']);
         $contact = $this->Contacts->get($contact_info['id']);
 
-        // Create Payment Session for user to jump to
-        // FIXME: Find a way to reuse existing session instead of creating one every time
+        // Create a distinct session for each payment attempt. The Blesta
+        // buildProcess() contract has no durable payment-attempt identifier or
+        // gateway storage hook, so matching its inputs would merge legitimate
+        // attempts for the same invoices. See README.md for the required design.
         try {
             $sessionObj = [
                 'customer_email' => $contact->email,
@@ -151,7 +153,17 @@ class StripeUniversal extends NonmerchantGateway
                     'invoices' => base64_encode(serialize($invoice_amounts)),
                 ]
             ];
-            $session = \Stripe\Checkout\Session::create($sessionObj);
+            $stripe = new \Stripe\StripeClient([
+                'api_key' => $this->meta['secret_key'],
+                'stripe_version' => self::STRIPE_API_VERSION,
+                'max_network_retries' => 2,
+            ]);
+            $session = $stripe->checkout->sessions->create($sessionObj, [
+                // This key is only reused by Stripe SDK retries for this request.
+                // It must not be derived from invoice data, which may represent a
+                // separate payment attempt.
+                'idempotency_key' => 'stripe-universal-checkout-' . bin2hex(random_bytes(16)),
+            ]);
         } catch (Exception $e) {
             $this->Input->setErrors(['api' => ['internal' => $e->getMessage()]]);
             return;
