@@ -2,7 +2,19 @@
 
 This is a non-merchant gateway for Blesta that integrates with [Stripe Checkout](https://stripe.com/payments/checkout). 
 
-Stripe Checkout can present cards, bank payments, wallets, vouchers, buy-now-pay-later services, and other local payment methods enabled for the account. See the complete categorized list below.
+Stripe Checkout can present eligible cards and South Korean cards; bank debits
+(Instant Bank Payments, ACH, Bacs, Australia and New Zealand BECS, Canadian
+PADs, and SEPA); bank redirects and real-time payments (Bancontact, BLIK, EPS,
+FPX, iDEAL / Wero, P24, Pay by Bank, PayNow, PayTo, Pix, PromptPay, Swish,
+TWINT, and UPI); bank transfers; buy-now-pay-later methods (Affirm, Afterpay /
+Clearpay, Alma, Billie, Capchase Pay, Klarna, Kriya, Mondu, Scalapay, SeQura,
+Sunbit, and Zip); vouchers (Boleto, Konbini, Multibanco, and OXXO); wallets
+(Alipay, Amazon Pay, Apple Pay, Cash App Pay, Google Pay, GrabPay, Kakao Pay,
+Link, MB WAY, MobilePay, Naver Pay, PayPal, PayPay, PAYCO, Revolut Pay, Samsung
+Pay, Satispay, Vipps, and WeChat Pay); and stablecoin, crypto, and custom payment
+methods. Availability depends on Stripe account, customer, currency, amount,
+device, and Checkout mode eligibility; see Stripe's
+[payment-method support matrix](https://docs.stripe.com/payments/payment-methods/payment-method-support).
 
 ## What it does
 
@@ -34,36 +46,6 @@ The webhook endpoint must subscribe to `checkout.session.completed`,
 
 After upgrading an existing installation to 1.1.0, save the gateway settings
 once to encrypt a webhook secret that was stored by an earlier release.
-
-### Payment Methods
-
-This gateway intentionally does not send Stripe's `payment_method_types` parameter when it creates a Checkout Session. Configure the payment methods offered to customers in the Stripe Dashboard; Stripe then applies the account settings and eligibility rules for each session.
-
-Stripe currently documents Checkout support for the following payment methods:
-
-| Family | Payment methods |
-| --- | --- |
-| Cards | Cards, including eligible global and local card networks and South Korean cards |
-| Bank debits | Instant Bank Payments, ACH Direct Debit, Bacs Direct Debit, Australia BECS Direct Debit, New Zealand BECS Direct Debit, pre-authorized debit in Canada (ACSS), SEPA Direct Debit |
-| Bank redirects | Bancontact, BLIK, EPS, FPX, iDEAL / Wero, P24, Pay by Bank, TWINT |
-| Bank transfers | USD, SEPA, UK, Japan (Furikomi), and Mexico bank transfers |
-| Buy now, pay later | Affirm, Afterpay / Clearpay, Alma, Billie, Capchase Pay, Klarna, Kriya, Mondu, Scalapay, SeQura, Sunbit, Zip |
-| Real-time payments | PayNow, PayTo, Pix, PromptPay, Swish, UPI |
-| Vouchers | Boleto, Konbini, Multibanco, OXXO |
-| Wallets | Alipay, Amazon Pay, Apple Pay, Cash App Pay, Google Pay, GrabPay, Kakao Pay, Link, MB WAY, MobilePay, Naver Pay, PayPal, PayPay, PAYCO, Revolut Pay, Samsung Pay, Satispay, Vipps, WeChat Pay |
-| Other | Stablecoin and crypto payments; eligible custom payment methods |
-
-Availability depends on the Stripe account's business location and capabilities,
-the customer's location, currency, amount, Checkout mode, device, and other
-eligibility rules. Consult Stripe's current
-[Checkout payment-method support matrix](https://docs.stripe.com/payments/payment-methods/payment-method-support)
-before promising a particular method to customers.
-
-[Giropay](https://support.stripe.com/questions/availability-of-giropay-june-2024-update)
-appeared in older versions of this README, but Stripe stopped accepting Giropay
-payments on June 30, 2024 and recommends removing it from integrations.
-
-An in-plugin allow-list is not provided. Add a code-level override only when payment methods must vary for individual transactions, rather than for the account as a whole.
 
 ## Customize the plugin
 
