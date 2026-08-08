@@ -2,7 +2,19 @@
 
 This is a non-merchant gateway for Blesta that integrates with [Stripe Checkout](https://stripe.com/payments/checkout). 
 
-Checkout page support all payment methods (From Alipay, WeChat, Google Pay, Apple Pay to EPS, iDEAL Giropay). 
+Stripe Checkout can present eligible cards and South Korean cards; bank debits
+(Instant Bank Payments, ACH, Bacs, Australia and New Zealand BECS, Canadian
+PADs, and SEPA); bank redirects and real-time payments (Bancontact, BLIK, EPS,
+FPX, iDEAL / Wero, P24, Pay by Bank, PayNow, PayTo, Pix, PromptPay, Swish,
+TWINT, and UPI); bank transfers; buy-now-pay-later methods (Affirm, Afterpay /
+Clearpay, Alma, Billie, Capchase Pay, Klarna, Kriya, Mondu, Scalapay, SeQura,
+Sunbit, and Zip); vouchers (Boleto, Konbini, Multibanco, and OXXO); wallets
+(Alipay, Amazon Pay, Apple Pay, Cash App Pay, Google Pay, GrabPay, Kakao Pay,
+Link, MB WAY, MobilePay, Naver Pay, PayPal, PayPay, PAYCO, Revolut Pay, Samsung
+Pay, Satispay, Vipps, and WeChat Pay); and stablecoin, crypto, and custom payment
+methods. Availability depends on Stripe account, customer, currency, amount,
+device, and Checkout mode eligibility; see Stripe's
+[payment-method support matrix](https://docs.stripe.com/payments/payment-methods/payment-method-support).
 
 ## What it does
 
@@ -11,10 +23,6 @@ Checkout page support all payment methods (From Alipay, WeChat, Google Pay, Appl
 - Separate items for multiple invoices checkout
 - Refund support (full and partial) via Stripe Refund API
 - Void transaction support (processed as full refund)
-
-### TODO
-
-- Disable payment type in settings
 
 ## Install the Gateway
 
