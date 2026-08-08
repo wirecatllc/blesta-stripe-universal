@@ -62,6 +62,8 @@ class BuildProcessTest extends TestCase
         $this->assertNotNull($lastRequest);
         $this->assertEquals('post', $lastRequest['method']);
         $this->assertStringContainsString('checkout/sessions', $lastRequest['absUrl']);
+        $this->assertSame('v1', $lastRequest['apiMode']);
+        $this->assertContains('Stripe-Version: 2024-04-10', $lastRequest['headers']);
     }
 
     public function testBuildProcessApiError()

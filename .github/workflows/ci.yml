@@ -7,6 +7,32 @@ on:
     branches: [master]
 
 jobs:
+  runtime-compatibility:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: ['7.2', '7.3']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          coverage: none
+
+      - name: Install production dependencies
+        uses: ramsey/composer-install@v3
+        with:
+          composer-options: '--no-dev'
+
+      - name: Check plugin syntax
+        run: php -l stripe_universal.php
+
+      - name: Load Stripe SDK
+        run: php -r "require 'vendor/autoload.php'; echo Stripe\\Stripe::VERSION, PHP_EOL;"
+
   test:
     runs-on: ubuntu-latest
     strategy:
@@ -63,7 +89,7 @@ jobs:
           dependency-versions: highest
 
       - name: Run PHPStan
-        run: vendor/bin/phpstan analyse --no-progress
+        run: vendor/bin/phpstan analyse --no-progress --memory-limit=512M
 
       - name: Run PHP CS Fixer
         run: vendor/bin/php-cs-fixer fix --dry-run --diff
