@@ -84,9 +84,6 @@ class StripeUniversal extends NonmerchantGateway
             ]
         ];
 
-        // @TODO enable a subset of available payment method
-        // https://stripe.com/docs/api/checkout/sessions/create#create_checkout_session-customer
-
         $this->Input->setRules($rules);
 
         return $meta;
@@ -151,6 +148,7 @@ class StripeUniversal extends NonmerchantGateway
                     'invoices' => base64_encode(serialize($invoice_amounts)),
                 ]
             ];
+            // Omit payment_method_types so Stripe Dashboard settings control Checkout methods.
             $session = \Stripe\Checkout\Session::create($sessionObj);
         } catch (Exception $e) {
             $this->Input->setErrors(['api' => ['internal' => $e->getMessage()]]);

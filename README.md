@@ -2,7 +2,7 @@
 
 This is a non-merchant gateway for Blesta that integrates with [Stripe Checkout](https://stripe.com/payments/checkout). 
 
-Checkout page support all payment methods (From Alipay, WeChat, Google Pay, Apple Pay to EPS, iDEAL Giropay). 
+Stripe Checkout presents payment methods enabled for the account, including options such as Alipay, WeChat, Google Pay, Apple Pay, EPS, iDEAL, and Giropay where eligible.
 
 ## What it does
 
@@ -11,10 +11,6 @@ Checkout page support all payment methods (From Alipay, WeChat, Google Pay, Appl
 - Separate items for multiple invoices checkout
 - Refund support (full and partial) via Stripe Refund API
 - Void transaction support (processed as full refund)
-
-### TODO
-
-- Disable payment type in settings
 
 ## Install the Gateway
 
@@ -38,6 +34,12 @@ The webhook endpoint must subscribe to `checkout.session.completed`,
 
 After upgrading an existing installation to 1.1.0, save the gateway settings
 once to encrypt a webhook secret that was stored by an earlier release.
+
+### Payment Methods
+
+This gateway intentionally does not send Stripe's `payment_method_types` parameter when it creates a Checkout Session. Configure the payment methods offered to customers in the Stripe Dashboard; Stripe then applies the account settings and eligibility rules for each session.
+
+An in-plugin allow-list is not provided. Add a code-level override only when payment methods must vary for individual transactions, rather than for the account as a whole.
 
 ## Customize the plugin
 
