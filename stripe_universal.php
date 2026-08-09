@@ -8,6 +8,7 @@
 class StripeUniversal extends NonmerchantGateway
 {
     private const STRIPE_API_VERSION = '2024-04-10';
+    private const REFUND_NETWORK_RETRIES = 2;
 
     /**
      * @var array An array of meta data for this gateway
@@ -385,6 +386,39 @@ class StripeUniversal extends NonmerchantGateway
         return 'declined';
     }
 
+    /**
+     * Creates a refund with a request-scoped idempotency key.
+     *
+     * Blesta does not supply a unique refund-attempt ID to gateway callbacks, so
+     * this key intentionally covers only Stripe's automatic retries for this
+     * invocation. A later, separate partial refund must receive a new key.
+     * Stripe PHP 21's legacy static API reads the retry count from global state,
+     * rather than the request options used by StripeClient, so restore it after
+     * the request completes.
+     *
+     * @param array $params Stripe Refund create parameters
+     * @return \Stripe\Refund
+     */
+    private function createRefund(array $params)
+    {
+        try {
+            $idempotencyKey = 'blesta-refund-' . bin2hex(random_bytes(16));
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Unable to generate a Stripe idempotency key.', 0, $e);
+        }
+
+        $previousRetries = \Stripe\Stripe::getMaxNetworkRetries();
+        \Stripe\Stripe::setMaxNetworkRetries(max($previousRetries, self::REFUND_NETWORK_RETRIES));
+
+        try {
+            return \Stripe\Refund::create($params, [
+                'idempotency_key' => $idempotencyKey,
+            ]);
+        } finally {
+            \Stripe\Stripe::setMaxNetworkRetries($previousRetries);
+        }
+    }
+
 
     /**
      * Checks whether a key can be used to connect to the Stripe API
@@ -433,7 +467,7 @@ class StripeUniversal extends NonmerchantGateway
                 true
             );
 
-            $refund = \Stripe\Refund::create([
+            $refund = $this->createRefund([
                 'payment_intent' => $transaction_id,
                 'amount' => $amount_cents,
             ]);
@@ -444,7 +478,7 @@ class StripeUniversal extends NonmerchantGateway
                 'output',
                 true
             );
-        } catch (\Stripe\Exception\ApiErrorException $e) {
+        } catch (\Stripe\Exception\ApiErrorException | \RuntimeException $e) {
             $this->log($this->base_url . 'refunds', $e->getMessage(), 'output', false);
             $this->Input->setErrors(['api' => ['internal' => $e->getMessage()]]);
             return;
@@ -472,7 +506,7 @@ class StripeUniversal extends NonmerchantGateway
                 true
             );
 
-            $refund = \Stripe\Refund::create([
+            $refund = $this->createRefund([
                 'payment_intent' => $transaction_id,
             ]);
 
@@ -482,7 +516,7 @@ class StripeUniversal extends NonmerchantGateway
                 'output',
                 true
             );
-        } catch (\Stripe\Exception\ApiErrorException $e) {
+        } catch (\Stripe\Exception\ApiErrorException | \RuntimeException $e) {
             $this->log($this->base_url . 'refunds - void', $e->getMessage(), 'output', false);
             $this->Input->setErrors(['api' => ['internal' => $e->getMessage()]]);
             return;

@@ -45,6 +45,9 @@ class MockHttpClient implements \Stripe\HttpClient\ClientInterface
             'apiMode',
             'maxNetworkRetries'
         );
+        $lastRequest = count(self::$requestLog) - 1;
+        self::$requestLog[$lastRequest]['configuredMaxNetworkRetries'] =
+            \Stripe\Stripe::getMaxNetworkRetries();
 
         if (!empty(self::$responseQueue)) {
             return array_shift(self::$responseQueue);

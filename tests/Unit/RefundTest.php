@@ -8,17 +8,26 @@ use PHPUnit\Framework\TestCase;
 class RefundTest extends TestCase
 {
     private $gateway;
+    private $originalMaxNetworkRetries;
 
     protected function setUp(): void
     {
         // Preload Stripe class to prevent loadApi() fatal error
         class_exists(\Stripe\Stripe::class);
 
+        $this->originalMaxNetworkRetries = \Stripe\Stripe::getMaxNetworkRetries();
+        \Stripe\Stripe::setMaxNetworkRetries(1);
+
         MockHttpClient::reset();
         \Stripe\ApiRequestor::setHttpClient(new MockHttpClient());
         $this->gateway = new StripeUniversal();
         $this->gateway->setMeta(['secret_key' => 'sk_test_123']);
         $this->gateway->setCurrency('USD');
+    }
+
+    protected function tearDown(): void
+    {
+        \Stripe\Stripe::setMaxNetworkRetries($this->originalMaxNetworkRetries);
     }
 
     public function testRefundSuccess()
@@ -93,6 +102,71 @@ class RefundTest extends TestCase
         $this->assertEquals(525, $refundRequest['params']['amount']);
     }
 
+    public function testRefundConfiguresRequestScopedIdempotencyAndRetries()
+    {
+        MockHttpClient::enqueueResponse(json_encode([
+            'id' => 'pi_test_retry',
+            'object' => 'payment_intent',
+            'currency' => 'usd',
+        ]));
+        MockHttpClient::enqueueResponse(json_encode([
+            'id' => 're_test_retry',
+            'object' => 'refund',
+            'payment_intent' => 'pi_test_retry',
+            'status' => 'succeeded',
+        ]));
+
+        $this->gateway->refund('cs_test_ref', 'pi_test_retry', 10.50);
+
+        $refundRequest = MockHttpClient::getAllRequests()[1];
+        $this->assertSame(2, $refundRequest['configuredMaxNetworkRetries']);
+        $idempotencyKey = $this->getIdempotencyKey($refundRequest['headers']);
+        $this->assertMatchesRegularExpression(
+            '/^blesta-refund-[a-f0-9]{32}$/',
+            $idempotencyKey
+        );
+        $this->assertSame(1, \Stripe\Stripe::getMaxNetworkRetries());
+    }
+
+    public function testEqualPartialRefundAttemptsUseDifferentIdempotencyKeys()
+    {
+        foreach (['one', 'two'] as $suffix) {
+            MockHttpClient::enqueueResponse(json_encode([
+                'id' => 'pi_test_equal_partial',
+                'object' => 'payment_intent',
+                'currency' => 'usd',
+            ]));
+            MockHttpClient::enqueueResponse(json_encode([
+                'id' => 're_test_equal_partial_' . $suffix,
+                'object' => 'refund',
+                'payment_intent' => 'pi_test_equal_partial',
+                'status' => 'succeeded',
+            ]));
+        }
+
+        $this->gateway->refund('cs_test_ref', 'pi_test_equal_partial', 5.25);
+        $this->gateway->refund('cs_test_ref', 'pi_test_equal_partial', 5.25);
+
+        $requests = MockHttpClient::getAllRequests();
+        $this->assertSame(525, $requests[1]['params']['amount']);
+        $this->assertSame(525, $requests[3]['params']['amount']);
+        $this->assertNotSame(
+            $this->getIdempotencyKey($requests[1]['headers']),
+            $this->getIdempotencyKey($requests[3]['headers'])
+        );
+    }
+
+    private function getIdempotencyKey(array $headers)
+    {
+        foreach ($headers as $header) {
+            if (strpos($header, 'Idempotency-Key: ') === 0) {
+                return substr($header, strlen('Idempotency-Key: '));
+            }
+        }
+
+        $this->fail('Stripe request did not include an idempotency key.');
+    }
+
     public function testRefundApiError()
     {
         // PaymentIntent::retrieve succeeds (needs currency for formatAmount)
@@ -118,6 +192,7 @@ class RefundTest extends TestCase
 
         $errors = $this->gateway->Input->errors();
         $this->assertArrayHasKey('api', $errors);
+        $this->assertSame(1, \Stripe\Stripe::getMaxNetworkRetries());
 
         // Verify error was logged with success=false
         $logs = $this->gateway->getLogEntries();

@@ -24,6 +24,9 @@ device, and Checkout mode eligibility; see Stripe's
 - Refund support (full and partial) via Stripe Refund API
 - Void transaction support (processed as full refund)
 
+Refund and void requests use request-scoped idempotency for automatic network
+retries. Check ambiguous results in Stripe before retrying them manually.
+
 ## Install the Gateway
 
 Upload the source code to `/components/gateways/nonmerchant/stripe_universal/` directory within your Blesta installation path.
