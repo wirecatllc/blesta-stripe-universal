@@ -50,6 +50,9 @@ The webhook endpoint must subscribe to `checkout.session.completed`,
 After upgrading an existing installation to 1.1.0, save the gateway settings
 once to encrypt a webhook secret that was stored by an earlier release.
 
+Checkout creates one Session per payment attempt. Request-scoped idempotency
+protects automatic network retries but does not reuse Sessions across visits.
+
 ## Customize the plugin
 
 Here are some tips if you want to customize/setup this plugin
