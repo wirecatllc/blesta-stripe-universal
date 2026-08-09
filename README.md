@@ -2,7 +2,19 @@
 
 This is a non-merchant gateway for Blesta that integrates with [Stripe Checkout](https://stripe.com/payments/checkout). 
 
-Checkout page support all payment methods (From Alipay, WeChat, Google Pay, Apple Pay to EPS, iDEAL Giropay). 
+Stripe Checkout can present eligible cards and South Korean cards; bank debits
+(Instant Bank Payments, ACH, Bacs, Australia and New Zealand BECS, Canadian
+PADs, and SEPA); bank redirects and real-time payments (Bancontact, BLIK, EPS,
+FPX, iDEAL / Wero, P24, Pay by Bank, PayNow, PayTo, Pix, PromptPay, Swish,
+TWINT, and UPI); bank transfers; buy-now-pay-later methods (Affirm, Afterpay /
+Clearpay, Alma, Billie, Capchase Pay, Klarna, Kriya, Mondu, Scalapay, SeQura,
+Sunbit, and Zip); vouchers (Boleto, Konbini, Multibanco, and OXXO); wallets
+(Alipay, Amazon Pay, Apple Pay, Cash App Pay, Google Pay, GrabPay, Kakao Pay,
+Link, MB WAY, MobilePay, Naver Pay, PayPal, PayPay, PAYCO, Revolut Pay, Samsung
+Pay, Satispay, Vipps, and WeChat Pay); and stablecoin, crypto, and custom payment
+methods. Availability depends on Stripe account, customer, currency, amount,
+device, and Checkout mode eligibility; see Stripe's
+[payment-method support matrix](https://docs.stripe.com/payments/payment-methods/payment-method-support).
 
 ## What it does
 
@@ -12,21 +24,8 @@ Checkout page support all payment methods (From Alipay, WeChat, Google Pay, Appl
 - Refund support (full and partial) via Stripe Refund API
 - Void transaction support (processed as full refund)
 
-### Refund retries
-
-Each refund and void invocation supplies one Stripe idempotency key and ensures
-Stripe PHP is configured for at least two retries on transient network failures.
-The key is unique to that invocation, which prevents duplicate refunds during it
-while allowing legitimate equal-value partial refunds later.
-
-Blesta's gateway callback does not provide a persistent refund-attempt ID, so
-an administrator retrying a request after the original invocation has ended is
-not deduplicated by this gateway. Resolve an ambiguous result in Stripe before
-retrying it manually.
-
-### TODO
-
-- Disable payment type in settings
+Refund and void requests use request-scoped idempotency for automatic network
+retries. Check ambiguous results in Stripe before retrying them manually.
 
 ## Install the Gateway
 
