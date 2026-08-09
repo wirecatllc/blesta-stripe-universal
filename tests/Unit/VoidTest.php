@@ -8,16 +8,25 @@ use PHPUnit\Framework\TestCase;
 class VoidTest extends TestCase
 {
     private $gateway;
+    private $originalMaxNetworkRetries;
 
     protected function setUp(): void
     {
         class_exists(\Stripe\Stripe::class);
+
+        $this->originalMaxNetworkRetries = \Stripe\Stripe::getMaxNetworkRetries();
+        \Stripe\Stripe::setMaxNetworkRetries(1);
 
         MockHttpClient::reset();
         \Stripe\ApiRequestor::setHttpClient(new MockHttpClient());
         $this->gateway = new StripeUniversal();
         $this->gateway->setMeta(['secret_key' => 'sk_test_123']);
         // No setCurrency() needed — void() does not convert amounts
+    }
+
+    protected function tearDown(): void
+    {
+        \Stripe\Stripe::setMaxNetworkRetries($this->originalMaxNetworkRetries);
     }
 
     public function testVoidSuccess()
@@ -67,7 +76,7 @@ class VoidTest extends TestCase
             '/^blesta-refund-[a-f0-9]{32}$/',
             $idempotencyKey
         );
-        $this->assertSame(0, \Stripe\Stripe::getMaxNetworkRetries());
+        $this->assertSame(1, \Stripe\Stripe::getMaxNetworkRetries());
     }
 
     private function getIdempotencyKey(array $headers)
@@ -96,7 +105,7 @@ class VoidTest extends TestCase
 
         $errors = $this->gateway->Input->errors();
         $this->assertArrayHasKey('api', $errors);
-        $this->assertSame(0, \Stripe\Stripe::getMaxNetworkRetries());
+        $this->assertSame(1, \Stripe\Stripe::getMaxNetworkRetries());
 
         // Verify error was logged with success=false
         $logs = $this->gateway->getLogEntries();
