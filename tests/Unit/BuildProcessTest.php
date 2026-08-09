@@ -64,6 +64,7 @@ class BuildProcessTest extends TestCase
         $this->assertStringContainsString('checkout/sessions', $lastRequest['absUrl']);
         $this->assertSame('v1', $lastRequest['apiMode']);
         $this->assertContains('Stripe-Version: 2024-04-10', $lastRequest['headers']);
+        $this->assertArrayNotHasKey('payment_method_types', $lastRequest['params']);
         $this->assertSame(2, $lastRequest['maxNetworkRetries']);
         $this->assertMatchesRegularExpression(
             '/^Idempotency-Key: stripe-universal-checkout-[a-f0-9]{32}$/',
