@@ -1,5 +1,6 @@
 <?php
 
+use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -132,6 +133,6 @@ class BuildProcessTest extends TestCase
             }
         }
 
-        $this->fail('Expected ' . $name . ' header was not sent.');
+        throw new AssertionFailedError('Expected ' . $name . ' header was not sent.');
     }
 }
